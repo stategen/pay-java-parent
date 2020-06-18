@@ -11,7 +11,7 @@ import com.egzosn.pay.common.api.BasePayConfigStorage;
  * date 2019/04/15 22:50
  * </pre>
  */
-public class YiJiPayConfigStorage extends BasePayConfigStorage {
+public class YiJiPayConfigStorage extends BasePayConfigStorage implements IYiJiPayConfigStorage{
 
 
     /**

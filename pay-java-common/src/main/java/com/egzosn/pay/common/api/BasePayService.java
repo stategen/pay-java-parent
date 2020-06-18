@@ -1,20 +1,33 @@
 package com.egzosn.pay.common.api;
 
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.alibaba.fastjson.JSON;
-import com.egzosn.pay.common.bean.*;
+import com.egzosn.pay.common.bean.MethodType;
+import com.egzosn.pay.common.bean.Order;
+import com.egzosn.pay.common.bean.PayMessage;
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.common.bean.PayOutMessage;
+import com.egzosn.pay.common.bean.RefundOrder;
+import com.egzosn.pay.common.bean.TransactionType;
+import com.egzosn.pay.common.bean.TransferOrder;
 import com.egzosn.pay.common.exception.PayErrorException;
-import com.egzosn.pay.common.http.HttpConfigStorage;
 import com.egzosn.pay.common.http.HttpRequestTemplate;
 import com.egzosn.pay.common.util.MatrixToImageWriter;
 import com.egzosn.pay.common.util.sign.SignUtils;
 import com.egzosn.pay.common.util.str.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.awt.image.BufferedImage;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
 
 /**
  * 支付基础服务
@@ -27,31 +40,68 @@ import java.util.*;
  */
 public abstract class BasePayService<PC extends PayConfigStorage> implements PayService<PC> {
     protected final Log LOG = LogFactory.getLog(getClass());
-    protected PC payConfigStorage;
+    // 以下设置为private,根据开闭包原则，应抗拒修改，用get来获取,get有利于拓展 */
+    
+    private PC payConfigStorage;
+    /* 为支持多appid,移至payConfigStorage
+    private HttpRequestTemplate requestTemplate;
+    */
+    
+    private int retrySleepMillis = 1000;
 
-    protected HttpRequestTemplate requestTemplate;
-    protected int retrySleepMillis = 1000;
-
-    protected int maxRetryTimes = 5;
-    /**
+    private int maxRetryTimes = 5;
+    
+    /***
      * 支付消息处理器
      */
-    protected PayMessageHandler handler;
+    private PayMessageHandler handler;
     /**
      * 支付消息拦截器
      */
-    protected List<PayMessageInterceptor> interceptors = new ArrayList<PayMessageInterceptor>();
-    ;
-
+    private List<PayMessageInterceptor> interceptors = new ArrayList<PayMessageInterceptor>();
+   
+    
+    public HttpRequestTemplate getRequestTemplate() {
+        PC payConfigStorage = getPayConfigStorage();
+        if (payConfigStorage!=null) {
+            HttpRequestTemplate requestTemplate = payConfigStorage.getRequestTemplate(); 
+            if (requestTemplate != null) {
+               return requestTemplate; 
+            }
+        }
+        return null;
+    }
+    
+    
+    public int getRetrySleepMillis() {
+        return retrySleepMillis;
+    }
+    
+    public void setRetrySleepMillis(int retrySleepMillis) {
+        this.retrySleepMillis = retrySleepMillis;
+    }
+    
+    
+    public int getMaxRetryTimes() {
+        return maxRetryTimes;
+    }
+    
+    
+    @Override
+    public String getReqUrl(TransactionType transactionType) {
+        return null;
+    }
+    
     /**
      * 设置支付配置
      *
      * @param payConfigStorage 支付配置
      */
+    @SuppressWarnings("unchecked")
     @Override
-    public BasePayService setPayConfigStorage(PC payConfigStorage) {
-        this.payConfigStorage = payConfigStorage;
-        return this;
+    public <T extends PayService<PC>> T setPayConfigStorage(PC payConfigStorage) {
+      this.payConfigStorage = payConfigStorage;
+      return (T) this;
     }
 
     @Override
@@ -61,31 +111,8 @@ public abstract class BasePayService<PC extends PayConfigStorage> implements Pay
 
     @Override
     public HttpRequestTemplate getHttpRequestTemplate() {
-        return requestTemplate;
+        return getRequestTemplate();
     }
-
-    /**
-     * 设置并创建请求模版， 代理请求配置这里是否合理？？，
-     *
-     * @param configStorage http请求配置
-     * @return 支付服务
-     */
-    @Override
-    public BasePayService setRequestTemplateConfigStorage(HttpConfigStorage configStorage) {
-        this.requestTemplate = new HttpRequestTemplate(configStorage);
-        return this;
-    }
-
-
-    public BasePayService(PC payConfigStorage) {
-        this(payConfigStorage, null);
-    }
-
-    public BasePayService(PC payConfigStorage, HttpConfigStorage configStorage) {
-        setPayConfigStorage(payConfigStorage);
-        setRequestTemplateConfigStorage(configStorage);
-    }
-
 
     /**
      * Generate a Base64 encoded String from  user , password
@@ -114,7 +141,7 @@ public abstract class BasePayService<PC extends PayConfigStorage> implements Pay
      */
     @Override
     public String createSign(String content, String characterEncoding) {
-
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return SignUtils.valueOf(payConfigStorage.getSignType()).createSign(content, payConfigStorage.getKeyPrivate(), characterEncoding);
     }
 
@@ -126,6 +153,7 @@ public abstract class BasePayService<PC extends PayConfigStorage> implements Pay
      * @return 签名
      */
     public String createSign(Map<String, Object> content, String characterEncoding) {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return SignUtils.valueOf(payConfigStorage.getSignType()).sign(content, payConfigStorage.getKeyPrivate(), characterEncoding);
     }
 
@@ -180,6 +208,7 @@ public abstract class BasePayService<PC extends PayConfigStorage> implements Pay
             for (int i = 0, len = values.length; i < len; i++) {
                 valueStr += (i == len - 1) ? values[i] : values[i] + ",";
             }
+            PayConfigStorage payConfigStorage =getPayConfigStorage();
             if (StringUtils.isNotEmpty(payConfigStorage.getInputCharset()) && !valueStr.matches("\\w+")) {
                 try {
                     if (valueStr.equals(new String(valueStr.getBytes("iso8859-1"), "iso8859-1"))) {

@@ -70,7 +70,9 @@ public enum PayType implements BasePayType {
             httpConfigStorage.setMaxTotal(20);
             //默认的每个路由的最大连接数
             httpConfigStorage.setDefaultMaxPerRoute(10);
-            return new AliPayService(configStorage, httpConfigStorage);
+            //多appid支持，设置到payConfigStorage中，--by niaoge
+            configStorage.setRequestTemplateConfigStorage(httpConfigStorage);
+            return new AliPayService().setPayConfigStorage(configStorage);
         }
 
         @Override
@@ -108,7 +110,8 @@ public enum PayType implements BasePayType {
             //设置ssl证书对应的存储方式，这里默认为文件地址
             httpConfigStorage.setCertStoreType(CertStoreType.PATH);
             return  new WxPayService(wxPayConfigStorage, httpConfigStorage);*/
-            WxPayService wxPayService = new WxPayService(wxPayConfigStorage);
+            WxPayService wxPayService = new WxPayService();
+            wxPayService.setPayConfigStorage(wxPayConfigStorage);
             wxPayService.setPayMessageHandler(new WxPayMessageHandler(1));
             return wxPayService;
         }
@@ -139,7 +142,7 @@ public enum PayType implements BasePayType {
             wxPayConfigStorage.setSeller(apyAccount.getSeller());
             wxPayConfigStorage.setInputCharset(apyAccount.getInputCharset());
             wxPayConfigStorage.setTest(apyAccount.isTest());
-            return  new WxYouDianPayService(wxPayConfigStorage);
+            return new WxYouDianPayService().setPayConfigStorage(wxPayConfigStorage);
         }
 
         /**
@@ -167,7 +170,7 @@ public enum PayType implements BasePayType {
             fuiouPayConfigStorage.setMsgType(apyAccount.getMsgType());
             fuiouPayConfigStorage.setInputCharset(apyAccount.getInputCharset());
             fuiouPayConfigStorage.setTest(apyAccount.isTest());
-            return new FuiouPayService(fuiouPayConfigStorage);
+            return new FuiouPayService().setPayConfigStorage(fuiouPayConfigStorage);
         }
 
         @Override
@@ -204,7 +207,7 @@ public enum PayType implements BasePayType {
             unionPayConfigStorage.setMsgType(apyAccount.getMsgType());
             unionPayConfigStorage.setInputCharset(apyAccount.getInputCharset());
             unionPayConfigStorage.setTest(apyAccount.isTest());
-            return new UnionPayService(unionPayConfigStorage);
+            return new UnionPayService().setPayConfigStorage(unionPayConfigStorage);
         }
 
         @Override
@@ -227,7 +230,7 @@ public enum PayType implements BasePayType {
             configStorage.setApiPassword(apyAccount.getPrivateKey());
             //是否为沙箱
             configStorage.setTest(true);
-            return new PayoneerPayService(configStorage);
+            return new PayoneerPayService().setPayConfigStorage(configStorage);
 
             //以下不建议进行使用，会引起两次请求的问题
             //Basic Auth
@@ -256,7 +259,7 @@ public enum PayType implements BasePayType {
             storage.setReturnUrl(apyAccount.getReturnUrl());
             //取消按钮转跳地址,这里兼容的做法
             storage.setNotifyUrl(apyAccount.getNotifyUrl());
-            return new PayPalPayService(storage);
+            return new PayPalPayService().setPayConfigStorage(storage);
         }
 
         @Override

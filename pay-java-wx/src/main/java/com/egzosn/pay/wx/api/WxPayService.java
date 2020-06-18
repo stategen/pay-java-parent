@@ -1,27 +1,58 @@
 package com.egzosn.pay.wx.api;
 
+import static com.egzosn.pay.wx.api.WxConst.APPID;
+import static com.egzosn.pay.wx.api.WxConst.CIPHER_ALGORITHM;
+import static com.egzosn.pay.wx.api.WxConst.FAILURE;
+import static com.egzosn.pay.wx.api.WxConst.HMACSHA256;
+import static com.egzosn.pay.wx.api.WxConst.MCH_ID;
+import static com.egzosn.pay.wx.api.WxConst.NONCE_STR;
+import static com.egzosn.pay.wx.api.WxConst.OUT_TRADE_NO;
+import static com.egzosn.pay.wx.api.WxConst.RESULT_CODE;
+import static com.egzosn.pay.wx.api.WxConst.RETURN_CODE;
+import static com.egzosn.pay.wx.api.WxConst.RETURN_MSG_CODE;
+import static com.egzosn.pay.wx.api.WxConst.SANDBOXNEW;
+import static com.egzosn.pay.wx.api.WxConst.SIGN;
+import static com.egzosn.pay.wx.api.WxConst.SUCCESS;
+import static com.egzosn.pay.wx.api.WxConst.URI;
+import static com.egzosn.pay.wx.bean.WxTransferType.GETTRANSFERINFO;
+import static com.egzosn.pay.wx.bean.WxTransferType.QUERY_BANK;
+import static com.egzosn.pay.wx.bean.WxTransferType.TRANSFERS;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLEncoder;
+import java.security.GeneralSecurityException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 import com.alibaba.fastjson.JSONObject;
 import com.egzosn.pay.common.api.BasePayService;
-import com.egzosn.pay.common.bean.*;
+import com.egzosn.pay.common.api.PayConfigStorage;
+import com.egzosn.pay.common.bean.MethodType;
+import com.egzosn.pay.common.bean.PayMessage;
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.common.bean.PayOutMessage;
+import com.egzosn.pay.common.bean.RefundOrder;
+import com.egzosn.pay.common.bean.SignType;
+import com.egzosn.pay.common.bean.TransactionType;
+import com.egzosn.pay.common.bean.TransferOrder;
 import com.egzosn.pay.common.bean.result.PayException;
 import com.egzosn.pay.common.exception.PayErrorException;
-import com.egzosn.pay.common.http.HttpConfigStorage;
 import com.egzosn.pay.common.util.DateUtils;
 import com.egzosn.pay.common.util.Util;
 import com.egzosn.pay.common.util.XML;
 import com.egzosn.pay.common.util.sign.SignUtils;
 import com.egzosn.pay.common.util.sign.encrypt.RSA2;
 import com.egzosn.pay.common.util.str.StringUtils;
-import com.egzosn.pay.wx.bean.*;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URLEncoder;
-import java.security.GeneralSecurityException;
-import java.util.*;
-
-import static com.egzosn.pay.wx.api.WxConst.*;
-import static com.egzosn.pay.wx.bean.WxTransferType.*;
+import com.egzosn.pay.wx.bean.RedpackOrder;
+import com.egzosn.pay.wx.bean.WxPayError;
+import com.egzosn.pay.wx.bean.WxPayMessage;
+import com.egzosn.pay.wx.bean.WxSendredpackType;
+import com.egzosn.pay.wx.bean.WxTransactionType;
+import com.egzosn.pay.wx.bean.WxTransferType;
 
 /**
  * 微信支付服务
@@ -32,42 +63,8 @@ import static com.egzosn.pay.wx.bean.WxTransferType.*;
  * date 2016-5-18 14:09:01
  * </pre>
  */
-public class WxPayService extends BasePayService<WxPayConfigStorage> implements WxRedPackService {
+public class WxPayService extends BasePayService<IWxPayConfigStorage> implements WxRedPackService {
 
-
-    /**
-     * 创建支付服务
-     *
-     * @param payConfigStorage 微信对应的支付配置
-     */
-    public WxPayService(WxPayConfigStorage payConfigStorage) {
-        super(payConfigStorage);
-    }
-
-    /**
-     * 创建支付服务
-     *
-     * @param payConfigStorage 微信对应的支付配置
-     * @param configStorage    微信对应的网络配置，包含代理配置、ssl证书配置
-     */
-    public WxPayService(WxPayConfigStorage payConfigStorage, HttpConfigStorage configStorage) {
-        super(payConfigStorage, configStorage);
-    }
-
-    /**
-     * 设置支付配置
-     *
-     * @param payConfigStorage 支付配置
-     */
-    @Override
-    public BasePayService setPayConfigStorage(WxPayConfigStorage payConfigStorage) {
-        String signType = payConfigStorage.getSignType();
-        if (HMAC_SHA256.equals(signType)) {
-            payConfigStorage.setSignType(HMACSHA256);
-        }
-        this.payConfigStorage = payConfigStorage;
-        return this;
-    }
 
     /**
      * 根据交易类型获取url
@@ -77,7 +74,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
      */
     @Override
     public String getReqUrl(TransactionType transactionType) {
-
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return URI + (payConfigStorage.isTest() ? SANDBOXNEW : "") + transactionType.getMethod();
     }
 
@@ -134,10 +131,12 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
      */
     @Override
     public boolean signVerify(Map<String, Object> params, String sign) {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return signVerify(params, sign, payConfigStorage.isTest());
     }
 
     private boolean signVerify(Map<String, Object> params, String sign, boolean isTest) {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         SignUtils signUtils = SignUtils.valueOf(payConfigStorage.getSignType());
         String keyPrivate = payConfigStorage.getKeyPrivate();
         if (isTest) {
@@ -155,6 +154,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
     private Map<String, Object> getPublicParameters() {
 
         Map<String, Object> parameters = new TreeMap<String, Object>();
+        IWxPayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put(APPID, payConfigStorage.getAppid());
         parameters.put(MCH_ID, payConfigStorage.getMchId());
         //判断如果是服务商模式信息则加入
@@ -187,6 +187,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
         // 总金额单位为分
         parameters.put("total_fee", Util.conversionCentAmount(order.getPrice()));
         setParameters(parameters, "attach", order.getAddition());
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put("notify_url", payConfigStorage.getNotifyUrl());
         parameters.put("trade_type", order.getTransactionType().getType());
         if (null != order.getExpirationTime()) {
@@ -215,7 +216,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
         }
 
         //调起支付的参数列表
-        JSONObject result = requestTemplate.postForObject(getReqUrl(order.getTransactionType()), requestXML, JSONObject.class);
+        JSONObject result = getRequestTemplate().postForObject(getReqUrl(order.getTransactionType()), requestXML, JSONObject.class);
 
         if (!SUCCESS.equals(result.get(RETURN_CODE)) || !SUCCESS.equals(result.get(RESULT_CODE))) {
             throw new PayErrorException(new WxPayError(result.getString(RESULT_CODE), result.getString(RETURN_MSG_CODE), result.toJSONString()));
@@ -244,7 +245,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
             }
 
             Map<String, Object> params = new TreeMap<String, Object>();
-
+            PayConfigStorage payConfigStorage =getPayConfigStorage();
             if (WxTransactionType.JSAPI == order.getTransactionType()) {
                 params.put("signType", payConfigStorage.getSignType());
                 params.put("appId", payConfigStorage.getAppid());
@@ -274,7 +275,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
      * @return 请求参数
      */
     private Map<String, Object> setSign(Map<String, Object> parameters) {
-
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         String signTypeStr = payConfigStorage.getSignType();
         if (HMACSHA256.equals(signTypeStr)) {
             signTypeStr = SignUtils.HMACSHA256.getName();
@@ -288,13 +289,20 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
 
     /**
      * 获取验签秘钥
-     *
+     * 考虑到测式环境，同时请求沙箱签名的请求不会很多，因此只需要调用中一次获得，不需要预先获取,但是些方法应该至少为protected,以方便提前调用获取sandboxSignkey --by niaoge
      * @return 验签秘钥
      */
-    private String getKeyPrivate() {
+    protected String getKeyPrivate() {
+        IWxPayConfigStorage payConfigStorage =getPayConfigStorage();
         if (!payConfigStorage.isTest()) {
             return payConfigStorage.getKeyPrivate();
         }
+        //沙箱有效天数为三天，不应该每次测试远程拿key  --by niaoge
+        String sandboxSignkey=payConfigStorage.getSandboxSignkey();
+        if (sandboxSignkey!=null && !sandboxSignkey.isEmpty()) {
+            return sandboxSignkey;
+        }
+        
         SortedMap<String, Object> parameters = new TreeMap<String, Object>();
         parameters.put(MCH_ID, payConfigStorage.getMchId());
         parameters.put(NONCE_STR, SignUtils.randomStr());
@@ -302,9 +310,11 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
         String sign = createSign(SignUtils.parameterText(parameters, "&", SIGN, "appId"), payConfigStorage.getInputCharset(), false);
         parameters.put(SIGN, sign);
 
-        JSONObject result = requestTemplate.postForObject(getReqUrl(WxTransactionType.GETSIGNKEY), XML.getMap2Xml(parameters), JSONObject.class);
+        JSONObject result = getRequestTemplate().postForObject(getReqUrl(WxTransactionType.GETSIGNKEY), XML.getMap2Xml(parameters), JSONObject.class);
         if (SUCCESS.equals(result.get(RETURN_CODE))) {
-            return result.getString("sandbox_signkey");
+            sandboxSignkey = result.getString("sandbox_signkey");
+            payConfigStorage.setSandboxSignkey(sandboxSignkey);
+            return sandboxSignkey;
         }
         LOG.error("获取sandbox_signkey失败", new PayErrorException(new PayException(result.getString(RETURN_CODE), result.getString(RETURN_MSG_CODE), result.toJSONString())));
         return null;
@@ -319,7 +329,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
      */
     @Override
     public String createSign(String content, String characterEncoding) {
-
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return createSign(content, characterEncoding, payConfigStorage.isTest());
     }
 
@@ -332,11 +342,12 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
      * @return 签名结果
      */
     public String createSign(String content, String characterEncoding, boolean test) {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         SignType signType = SignUtils.valueOf(payConfigStorage.getSignType().toUpperCase());
         String keyPrivate = payConfigStorage.getKeyPrivate();
         if (test) {
             keyPrivate = getKeyPrivate();
-        }
+        } 
         return signType.createSign(content + "&key=" + (signType == SignUtils.MD5 ? "" : keyPrivate), keyPrivate, characterEncoding).toUpperCase();
     }
 
@@ -398,6 +409,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
             throw new PayErrorException(new WxPayError((String) orderInfo.get(RETURN_CODE), (String) orderInfo.get(RETURN_MSG_CODE)));
         }
         if (WxTransactionType.MWEB.name().equals(orderInfo.get("trade_type"))) {
+            PayConfigStorage payConfigStorage =getPayConfigStorage();
             return String.format("<script type=\"text/javascript\">location.href=\"%s%s\"</script>", orderInfo.get("mweb_url"), StringUtils.isEmpty(payConfigStorage.getReturnUrl()) ? "" : "&redirect_url=" + URLEncoder.encode(payConfigStorage.getReturnUrl()));
         }
         throw new UnsupportedOperationException();
@@ -494,6 +506,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
         setParameters(parameters, "out_refund_no", refundOrder.getRefundNo());
         parameters.put("total_fee", Util.conversionCentAmount(refundOrder.getTotalAmount()));
         parameters.put("refund_fee", Util.conversionCentAmount(refundOrder.getRefundAmount()));
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         setParameters(parameters, "notify_url", payConfigStorage.getNotifyUrl());
         if (null != refundOrder.getCurType()) {
             parameters.put("refund_fee_type", refundOrder.getCurType().getType());
@@ -501,7 +514,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
         setParameters(parameters, "refund_desc", refundOrder.getDescription());
         //设置签名
         setSign(parameters);
-        return requestTemplate.postForObject(getReqUrl(WxTransactionType.REFUND), XML.getMap2Xml(parameters), JSONObject.class);
+        return getRequestTemplate().postForObject(getReqUrl(WxTransactionType.REFUND), XML.getMap2Xml(parameters), JSONObject.class);
     }
 
 
@@ -521,7 +534,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
         setParameters(parameters, "out_refund_no", refundOrder.getRefundNo());
         //设置签名
         setSign(parameters);
-        return requestTemplate.postForObject(getReqUrl(WxTransactionType.REFUNDQUERY), XML.getMap2Xml(parameters), JSONObject.class);
+        return getRequestTemplate().postForObject(getReqUrl(WxTransactionType.REFUNDQUERY), XML.getMap2Xml(parameters), JSONObject.class);
     }
 
 
@@ -545,7 +558,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
 
         //设置签名
         setSign(parameters);
-        String respStr = requestTemplate.postForObject(getReqUrl(WxTransactionType.DOWNLOADBILL), XML.getMap2Xml(parameters), String.class);
+        String respStr = getRequestTemplate().postForObject(getReqUrl(WxTransactionType.DOWNLOADBILL), XML.getMap2Xml(parameters), String.class);
         if (respStr.indexOf("<") == 0) {
             return XML.toJSONObject(respStr);
         }
@@ -588,7 +601,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
         setParameters(parameters, "transaction_id", (String) transactionIdOrBillDate);
         //设置签名
         setSign(parameters);
-        return requestTemplate.postForObject(getReqUrl(transactionType), XML.getMap2Xml(parameters), JSONObject.class);
+        return getRequestTemplate().postForObject(getReqUrl(transactionType), XML.getMap2Xml(parameters), JSONObject.class);
     }
 
     /**
@@ -616,6 +629,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
             parameters.put("desc", order.getRemark());
         }
         parameters.put(NONCE_STR, SignUtils.randomStr());
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         if (null != order.getTransferType() && TRANSFERS == order.getTransferType()) {
             transfers(parameters, order);
             parameters.put("mchid", payConfigStorage.getPid());
@@ -642,6 +656,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
      */
     public Map<String, Object> transfers(Map<String, Object> parameters, TransferOrder order) {
         //转账到余额, 申请商户号的appid或商户号绑定的appid
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put("mch_appid", payConfigStorage.getAppid());
         parameters.put("openid", order.getPayeeAccount());
         parameters.put("spbill_create_ip", StringUtils.isEmpty(order.getIp()) ? "192.168.1.150" : order.getIp());
@@ -685,6 +700,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
     @Override
     public Map<String, Object> transferQuery(String outNo, String wxTransferType) {
         Map<String, Object> parameters = new TreeMap<String, Object>();
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put(MCH_ID, payConfigStorage.getPid());
         parameters.put("partner_trade_no", outNo);
         parameters.put(NONCE_STR, SignUtils.randomStr());
@@ -703,6 +719,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
 
     public String keyPublic(String content) {
         try {
+            PayConfigStorage payConfigStorage =getPayConfigStorage();
             return RSA2.encrypt(content, payConfigStorage.getKeyPublic(), CIPHER_ALGORITHM, payConfigStorage.getInputCharset());
         } catch (GeneralSecurityException | IOException e) {
             throw new PayErrorException(new WxPayError(FAILURE, e.getLocalizedMessage()));
@@ -738,9 +755,9 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
         } else if (WxSendredpackType.SENDMINIPROGRAMHB == redpackOrder.getTransferType()) {
             parameters.put("notify_way", "MINI_PROGRAM_JSAPI");
         }
-
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put(SIGN, createSign(SignUtils.parameterText(parameters, "&", SIGN), payConfigStorage.getInputCharset()));
-        return requestTemplate.postForObject(getReqUrl(redpackOrder.getTransferType()), XML.getMap2Xml(parameters), JSONObject.class);
+        return getRequestTemplate().postForObject(getReqUrl(redpackOrder.getTransferType()), XML.getMap2Xml(parameters), JSONObject.class);
     }
 
 
@@ -758,8 +775,9 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
         Map<String, Object> parameters = this.getPublicParameters();
         parameters.put("mch_billno", mchBillno);
         parameters.put("bill_type", "MCHT");
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put(SIGN, createSign(SignUtils.parameterText(parameters, "&", SIGN), payConfigStorage.getInputCharset()));
-        return requestTemplate.postForObject(getReqUrl(WxSendredpackType.GETHBINFO), XML.getMap2Xml(parameters), JSONObject.class);
+        return getRequestTemplate().postForObject(getReqUrl(WxSendredpackType.GETHBINFO), XML.getMap2Xml(parameters), JSONObject.class);
     }
 
     /**
@@ -770,6 +788,7 @@ public class WxPayService extends BasePayService<WxPayConfigStorage> implements 
      */
     private void redPackParam(RedpackOrder redpackOrder, Map<String, Object> parameters) {
         parameters.put(NONCE_STR, SignUtils.randomStr());
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put(MCH_ID, payConfigStorage.getPid());
         parameters.put("wxappid", payConfigStorage.getAppid());
         parameters.put("send_name", redpackOrder.getSendName());

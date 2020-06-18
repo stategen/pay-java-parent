@@ -1,9 +1,10 @@
 package com.egzosn.pay.common.api;
 
-import com.egzosn.pay.common.bean.MsgType;
-import com.egzosn.pay.common.util.sign.CertDescriptor;
-
 import java.util.concurrent.locks.Lock;
+
+import com.egzosn.pay.common.bean.MsgType;
+import com.egzosn.pay.common.http.HttpConfigStorage;
+import com.egzosn.pay.common.http.HttpRequestTemplate;
 
 /**
  * 支付客户端配置存储
@@ -147,8 +148,10 @@ import java.util.concurrent.locks.Lock;
      * @return true测试环境
      */
     boolean isTest();
+    
+    /***多appid下，将网络设置存入payConfigStore中 --by niaoge*/
+    HttpRequestTemplate getRequestTemplate();
 
-
-
-
+    /***多appid下，将网络设置存入payConfigStore中 --by niaoge*/
+    PayConfigStorage setRequestTemplateConfigStorage(HttpConfigStorage configStorage);
 }

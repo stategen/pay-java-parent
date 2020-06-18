@@ -10,7 +10,7 @@ import com.egzosn.pay.common.api.BasePayConfigStorage;
  *         email egzosn@gmail.com
  *         date 2018-4-8 22:11:42
  */
-public class PayPalConfigStorage extends BasePayConfigStorage {
+public class PayPalConfigStorage extends BasePayConfigStorage implements IPayPalConfigStorage {
 
     private String clientID;
 

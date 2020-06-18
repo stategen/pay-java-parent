@@ -1,14 +1,14 @@
+import java.awt.image.BufferedImage;
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.UUID;
+
 import com.egzosn.pay.ali.api.AliPayConfigStorage;
 import com.egzosn.pay.ali.api.AliPayService;
 import com.egzosn.pay.ali.bean.AliTransactionType;
 import com.egzosn.pay.common.api.PayService;
 import com.egzosn.pay.common.bean.MethodType;
 import com.egzosn.pay.common.bean.PayOrder;
-
-import java.awt.image.BufferedImage;
-import java.math.BigDecimal;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  *
@@ -35,7 +35,7 @@ public class PayTest {
         //是否为测试账号，沙箱环境
         aliPayConfigStorage.setTest(true);
         //支付服务
-        PayService service = new AliPayService(aliPayConfigStorage);
+        PayService service = new AliPayService().setPayConfigStorage(aliPayConfigStorage);
         //支付订单基础信息
         PayOrder payOrder = new PayOrder("订单title", "摘要",  new BigDecimal(0.01) , UUID.randomUUID().toString().replace("-", ""));
         /*-----------扫码付-------------------*/

@@ -1,14 +1,19 @@
 package com.egzosn.pay.common.api;
 
-import com.egzosn.pay.common.bean.*;
-import com.egzosn.pay.common.exception.PayErrorException;
-import com.egzosn.pay.common.http.HttpConfigStorage;
-import com.egzosn.pay.common.http.HttpRequestTemplate;
-
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.Map;
+
+import com.egzosn.pay.common.bean.MethodType;
+import com.egzosn.pay.common.bean.PayMessage;
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.common.bean.PayOutMessage;
+import com.egzosn.pay.common.bean.RefundOrder;
+import com.egzosn.pay.common.bean.TransactionType;
+import com.egzosn.pay.common.bean.TransferOrder;
+import com.egzosn.pay.common.exception.PayErrorException;
+import com.egzosn.pay.common.http.HttpRequestTemplate;
 
 /**
  * 支付服务
@@ -28,7 +33,7 @@ public interface PayService<PC extends PayConfigStorage> {
      * @param payConfigStorage 支付配置
      * @return 支付服务
      */
-    PayService setPayConfigStorage(PC payConfigStorage);
+    <T extends PayService<PC>> T setPayConfigStorage(PC payConfigStorage);
 
     /**
      * 获取支付配置
@@ -44,13 +49,13 @@ public interface PayService<PC extends PayConfigStorage> {
      */
     HttpRequestTemplate getHttpRequestTemplate();
 
-    /**
+    /* 为支持多appid,移至 payConfigStore
      * 设置 请求工具配置  设置并创建请求模版， 代理请求配置这里是否合理？？，
      *
      * @param configStorage http请求配置
      * @return 支付服务
+     *PayService setRequestTemplateConfigStorage(HttpConfigStorage configStorage);
      */
-    PayService setRequestTemplateConfigStorage(HttpConfigStorage configStorage);
 
     /**
      * 回调校验

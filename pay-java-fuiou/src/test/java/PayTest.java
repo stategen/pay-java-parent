@@ -1,15 +1,12 @@
-import com.egzosn.pay.common.api.PayService;
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.UUID;
+
 import com.egzosn.pay.common.bean.MethodType;
 import com.egzosn.pay.common.bean.PayOrder;
 import com.egzosn.pay.fuiou.api.FuiouPayConfigStorage;
 import com.egzosn.pay.fuiou.api.FuiouPayService;
 import com.egzosn.pay.fuiou.bean.FuiouTransactionType;
-
-import java.awt.image.BufferedImage;
-import java.math.BigDecimal;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  *
@@ -35,7 +32,8 @@ public class PayTest {
         //是否为测试账号，沙箱环境
         fuiouPayConfigStorage.setTest(true);
         //支付服务
-        PayService service = new FuiouPayService(fuiouPayConfigStorage);
+        FuiouPayService service = new FuiouPayService();
+        service.setPayConfigStorage(fuiouPayConfigStorage);
         //支付订单基础信息
         PayOrder payOrder = new PayOrder("订单title", "摘要",  new BigDecimal(0.01) , UUID.randomUUID().toString().replace("-", "").substring(2));
 

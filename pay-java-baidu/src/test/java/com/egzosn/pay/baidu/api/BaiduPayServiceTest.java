@@ -18,7 +18,8 @@ public class BaiduPayServiceTest {
         configStorage.setDealId("DEAL ID");
         configStorage.setKeyPublic("KEY PUBLIC");
     
-        BaiduPayService payService = new BaiduPayService(configStorage);
+        BaiduPayService payService = new BaiduPayService();
+        payService.setPayConfigStorage(configStorage);
         // payService.refund()
     }
 }

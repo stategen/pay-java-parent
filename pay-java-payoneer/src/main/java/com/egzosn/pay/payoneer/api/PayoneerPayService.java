@@ -1,24 +1,37 @@
 package com.egzosn.pay.payoneer.api;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.http.Header;
+import org.apache.http.entity.ContentType;
+import org.apache.http.message.BasicHeader;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.egzosn.pay.common.api.BasePayService;
-import com.egzosn.pay.common.bean.*;
+import com.egzosn.pay.common.api.PayConfigStorage;
+import com.egzosn.pay.common.bean.DefaultCurType;
+import com.egzosn.pay.common.bean.MethodType;
+import com.egzosn.pay.common.bean.PayMessage;
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.common.bean.PayOutMessage;
+import com.egzosn.pay.common.bean.RefundOrder;
+import com.egzosn.pay.common.bean.TransactionType;
+import com.egzosn.pay.common.bean.TransferOrder;
 import com.egzosn.pay.common.bean.outbuilder.PayTextOutMessage;
 import com.egzosn.pay.common.bean.result.PayException;
 import com.egzosn.pay.common.exception.PayErrorException;
-import com.egzosn.pay.common.http.HttpConfigStorage;
 import com.egzosn.pay.common.http.HttpHeader;
 import com.egzosn.pay.common.http.HttpStringEntity;
 import com.egzosn.pay.common.http.UriVariables;
 import com.egzosn.pay.common.util.DateUtils;
 import com.egzosn.pay.common.util.Util;
 import com.egzosn.pay.payoneer.bean.PayoneerTransactionType;
-import org.apache.http.Header;
-import org.apache.http.entity.ContentType;
-import org.apache.http.message.BasicHeader;
-
-import java.util.*;
 
 /**
  * payoneer业务逻辑
@@ -31,7 +44,7 @@ import java.util.*;
  *         create 2018-01-19
  *                 </pre>
  */
-public class PayoneerPayService extends BasePayService<PayoneerConfigStorage> implements AdvancedPayService {
+public class PayoneerPayService extends BasePayService<IPayoneerConfigStorage> implements AdvancedPayService {
     /**
      * 测试地址
      */
@@ -48,15 +61,6 @@ public class PayoneerPayService extends BasePayService<PayoneerConfigStorage> im
      * 响应状态码
      */
     private final static String OUT_TRADE_NO = "client_reference_id";
-
-
-    public PayoneerPayService(PayoneerConfigStorage payConfigStorage) {
-        super(payConfigStorage);
-    }
-
-    public PayoneerPayService(PayoneerConfigStorage payConfigStorage, HttpConfigStorage configStorage) {
-        super(payConfigStorage, configStorage);
-    }
 
     /**
      * 获取授权请求头
@@ -417,6 +421,7 @@ public class PayoneerPayService extends BasePayService<PayoneerConfigStorage> im
      * @return 请求地址
      */
     public String getReqUrl(TransactionType type) {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return (payConfigStorage.isTest() ? SANDBOX_DOMAIN : RELEASE_DOMAIN) + payConfigStorage.getPid() + "/" + type.getMethod();
     }
 

@@ -1,15 +1,13 @@
 
-import com.egzosn.pay.common.api.PayService;
-import com.egzosn.pay.common.bean.MethodType;
-import com.egzosn.pay.common.bean.PayOrder;
-import com.egzosn.pay.wx.youdian.api.WxYouDianPayConfigStorage;
-import com.egzosn.pay.wx.youdian.api.WxYouDianPayService;
-import com.egzosn.pay.wx.youdian.bean.YoudianTransactionType;
-
 import java.awt.image.BufferedImage;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
+
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.wx.youdian.api.WxYouDianPayConfigStorage;
+import com.egzosn.pay.wx.youdian.api.WxYouDianPayService;
+import com.egzosn.pay.wx.youdian.bean.YoudianTransactionType;
 
 /**
  *
@@ -35,7 +33,8 @@ public class PayTest {
         //是否为测试账号，沙箱环境 此处暂未实现
         wxPayConfigStorage.setTest(true);
         //支付服务
-        PayService service =   new WxYouDianPayService(wxPayConfigStorage);
+        WxYouDianPayService service = new WxYouDianPayService();
+        service.setPayConfigStorage(wxPayConfigStorage);
         //支付订单基础信息
         PayOrder payOrder = new PayOrder("订单title", "摘要",  new BigDecimal(0.01) , UUID.randomUUID().toString().replace("-", ""));
         /*-----------扫码付-------------------*/

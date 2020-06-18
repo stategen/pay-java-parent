@@ -2,9 +2,24 @@
 package com.egzosn.pay.demo.controller;
 
 
+import static com.egzosn.pay.union.bean.UnionTransactionType.WEB;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.PostConstruct;
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.egzosn.pay.common.api.PayService;
 import com.egzosn.pay.common.bean.CertStoreType;
-import com.egzosn.pay.common.bean.MethodType;
 import com.egzosn.pay.common.bean.PayOrder;
 import com.egzosn.pay.common.bean.RefundOrder;
 import com.egzosn.pay.common.http.HttpConfigStorage;
@@ -13,20 +28,6 @@ import com.egzosn.pay.demo.request.QueryOrder;
 import com.egzosn.pay.union.api.UnionPayConfigStorage;
 import com.egzosn.pay.union.api.UnionPayService;
 import com.egzosn.pay.union.bean.UnionTransactionType;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import javax.annotation.PostConstruct;
-import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletRequest;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import static com.egzosn.pay.union.bean.UnionTransactionType.WEB;
 
 /**
  *  银联相关
@@ -72,7 +73,8 @@ public class UnionPayController {
         unionPayConfigStorage.setInputCharset("UTF-8");
         //是否为测试账号，沙箱环境
         unionPayConfigStorage.setTest(true);
-        service = new UnionPayService(unionPayConfigStorage);
+        service = new UnionPayService();
+        service.setPayConfigStorage(unionPayConfigStorage);
 
         //请求连接池配置
         HttpConfigStorage httpConfigStorage = new HttpConfigStorage();
@@ -80,7 +82,7 @@ public class UnionPayController {
         httpConfigStorage.setMaxTotal(20);
         //默认的每个路由的最大连接数
         httpConfigStorage.setDefaultMaxPerRoute(10);
-        service.setRequestTemplateConfigStorage(httpConfigStorage);
+        unionPayConfigStorage.setRequestTemplateConfigStorage(httpConfigStorage);
 
     }
 

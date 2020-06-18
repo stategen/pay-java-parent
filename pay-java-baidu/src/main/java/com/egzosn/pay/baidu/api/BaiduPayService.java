@@ -1,28 +1,31 @@
 package com.egzosn.pay.baidu.api;
 
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.egzosn.pay.baidu.bean.BaiduPayOrder;
-import com.egzosn.pay.baidu.bean.BaiduRefundOrder;
 import com.egzosn.pay.baidu.bean.BaiduTransactionType;
 import com.egzosn.pay.baidu.bean.type.AuditStatus;
 import com.egzosn.pay.baidu.util.Asserts;
 import com.egzosn.pay.common.api.BasePayService;
-import com.egzosn.pay.common.bean.*;
-import com.egzosn.pay.common.http.HttpConfigStorage;
+import com.egzosn.pay.common.bean.MethodType;
+import com.egzosn.pay.common.bean.PayMessage;
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.common.bean.PayOutMessage;
+import com.egzosn.pay.common.bean.RefundOrder;
+import com.egzosn.pay.common.bean.TransactionType;
 import com.egzosn.pay.common.http.UriVariables;
 import com.egzosn.pay.common.util.DateUtils;
 import com.egzosn.pay.common.util.Util;
 import com.egzosn.pay.common.util.sign.SignUtils;
 import com.egzosn.pay.common.util.str.StringUtils;
 
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
-
-public class BaiduPayService extends BasePayService<BaiduPayConfigStorage> {
+public class BaiduPayService extends BasePayService<IBaiduPayConfigStorage> {
     public static final String APP_KEY = "appKey";
     public static final String APP_ID = "appId";
     public static final String DEAL_ID = "dealId";
@@ -42,15 +45,6 @@ public class BaiduPayService extends BasePayService<BaiduPayConfigStorage> {
     public static final Integer RESPONSE_SUCCESS = 2;
     public static final String RESPONSE_STATUS = "status";
 
-
-    public BaiduPayService(BaiduPayConfigStorage payConfigStorage) {
-        super(payConfigStorage);
-    }
-
-    public BaiduPayService(BaiduPayConfigStorage payConfigStorage,
-                           HttpConfigStorage configStorage) {
-        super(payConfigStorage, configStorage);
-    }
 
     /**
      * 验证响应
@@ -106,6 +100,7 @@ public class BaiduPayService extends BasePayService<BaiduPayConfigStorage> {
      * @return 结果
      */
     public Map<String, Object> getUseQueryPay() {
+        IBaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
         String appKey = payConfigStorage.getAppKey();
         Map<String, Object> result = new HashMap<>();
         result.put(APP_KEY, appKey);
@@ -122,6 +117,7 @@ public class BaiduPayService extends BasePayService<BaiduPayConfigStorage> {
     private Map<String, Object> getUseOrderInfoParams(PayOrder order) {
         BaiduPayOrder payOrder = (BaiduPayOrder) order;
         Map<String, Object> result = new HashMap<>();
+        IBaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
         String appKey = payConfigStorage.getAppKey();
         String dealId = payConfigStorage.getDealId();
         result.put(APP_KEY, appKey);
@@ -327,9 +323,10 @@ public class BaiduPayService extends BasePayService<BaiduPayConfigStorage> {
         parameters.put(TP_ORDER_ID, refundOrder.getTradeNo());
         parameters.put("applyRefundMoney", refundOrder.getRefundAmount());
         parameters.put("bizRefundBatchId", refundOrder.getRefundNo());
+        IBaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put(APP_KEY, payConfigStorage.getAppKey());
         parameters.put(RSA_SIGN, getRsaSign(parameters, RSA_SIGN));
-        return requestTemplate.getForObject(String.format("%s?%s", getReqUrl(transactionType), UriVariables.getMapToParameters(parameters)), JSONObject.class);
+        return getRequestTemplate().getForObject(String.format("%s?%s", getReqUrl(transactionType), UriVariables.getMapToParameters(parameters)), JSONObject.class);
 
     }
 
@@ -349,9 +346,10 @@ public class BaiduPayService extends BasePayService<BaiduPayConfigStorage> {
         parameters.put(TYPE, 3);
         parameters.put(ORDER_ID, refundOrder.getTradeNo());
         parameters.put(USER_ID, refundOrder.getUserId());
+        IBaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put(APP_KEY, payConfigStorage.getAppKey());
         parameters.put(RSA_SIGN, getRsaSign(parameters, RSA_SIGN));
-        return requestTemplate.getForObject(String.format("%s?%s", getReqUrl(transactionType), UriVariables.getMapToParameters(parameters)), JSONObject.class);
+        return getRequestTemplate().getForObject(String.format("%s?%s", getReqUrl(transactionType), UriVariables.getMapToParameters(parameters)), JSONObject.class);
     }
 
     /**
@@ -366,7 +364,7 @@ public class BaiduPayService extends BasePayService<BaiduPayConfigStorage> {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("access_token", accessToken);
         parameters.put("billTime", DateUtils.formatDay(billDate));
-        return requestTemplate.getForObject(String.format("%s?%s", getReqUrl(BaiduTransactionType.DOWNLOAD_BILL),
+        return getRequestTemplate().getForObject(String.format("%s?%s", getReqUrl(BaiduTransactionType.DOWNLOAD_BILL),
                 UriVariables.getMapToParameters(parameters)), JSONObject.class);
     }
 
@@ -381,7 +379,7 @@ public class BaiduPayService extends BasePayService<BaiduPayConfigStorage> {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("access_token", accessToken);
         parameters.put("billTime", DateUtils.formatDay(billDate));
-        return requestTemplate.getForObject(String.format("%s?%s", getReqUrl(BaiduTransactionType.DOWNLOAD_ORDER_BILL),
+        return getRequestTemplate().getForObject(String.format("%s?%s", getReqUrl(BaiduTransactionType.DOWNLOAD_ORDER_BILL),
                 UriVariables.getMapToParameters(parameters)), JSONObject.class);
     }
 
@@ -405,7 +403,7 @@ public class BaiduPayService extends BasePayService<BaiduPayConfigStorage> {
         parameters.put(ORDER_ID, orderId);
         parameters.put(SITE_ID, siteId);
         parameters.put(SIGN, getRsaSign(parameters, SIGN));
-        return requestTemplate.getForObject(String.format("%s?%s", getReqUrl(transactionType), UriVariables.getMapToParameters(parameters)), JSONObject.class);
+        return getRequestTemplate().getForObject(String.format("%s?%s", getReqUrl(transactionType), UriVariables.getMapToParameters(parameters)), JSONObject.class);
     }
 
     /**
@@ -428,6 +426,8 @@ public class BaiduPayService extends BasePayService<BaiduPayConfigStorage> {
      */
     private String getRsaSign(Map<String, Object> params, String... ignoreKeys) {
         String waitSignVal = SignUtils.parameterText(params, "&", false, ignoreKeys);
+        IBaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
         return SignUtils.valueOf(payConfigStorage.getSignType()).createSign(waitSignVal, payConfigStorage.getKeyPrivate(), payConfigStorage.getInputCharset());
     }
+
 }

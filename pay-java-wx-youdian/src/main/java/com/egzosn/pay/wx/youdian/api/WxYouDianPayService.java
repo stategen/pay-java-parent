@@ -1,23 +1,32 @@
 package com.egzosn.pay.wx.youdian.api;
 
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.locks.Lock;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.egzosn.pay.common.api.BasePayService;
-import com.egzosn.pay.common.bean.*;
+import com.egzosn.pay.common.api.PayConfigStorage;
+import com.egzosn.pay.common.bean.MethodType;
+import com.egzosn.pay.common.bean.PayMessage;
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.common.bean.PayOutMessage;
+import com.egzosn.pay.common.bean.RefundOrder;
+import com.egzosn.pay.common.bean.TransactionType;
 import com.egzosn.pay.common.bean.result.PayError;
 import com.egzosn.pay.common.exception.PayErrorException;
-import com.egzosn.pay.common.http.HttpConfigStorage;
 import com.egzosn.pay.common.util.Util;
 import com.egzosn.pay.common.util.sign.SignUtils;
 import com.egzosn.pay.common.util.str.StringUtils;
 import com.egzosn.pay.wx.youdian.bean.WxYoudianPayMessage;
 import com.egzosn.pay.wx.youdian.bean.YdPayError;
 import com.egzosn.pay.wx.youdian.bean.YoudianTransactionType;
-
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.locks.Lock;
 
 /**
  *  友店支付服务
@@ -26,7 +35,7 @@ import java.util.concurrent.locks.Lock;
  * email egzosn@gmail.com
  * date 2017/01/12 22:58
  */
-public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorage> {
+public class WxYouDianPayService extends BasePayService<IWxYouDianPayConfigStorage> {
 
     private final static String URL = "http://life.51youdian.com/Api/CheckoutCounter/";
 
@@ -50,6 +59,7 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
      * @throws PayErrorException 支付异常
      */
     public String getAccessToken(boolean forceRefresh) throws PayErrorException {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         Lock lock = payConfigStorage.getAccessTokenLock();
         try {
             lock.lock();
@@ -89,6 +99,7 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
      */
      public JSONObject login() throws PayErrorException {
          TreeMap<String, String> data = new TreeMap<>();
+         PayConfigStorage payConfigStorage =getPayConfigStorage();
          data.put("username",  payConfigStorage.getSeller());
          data.put("password", payConfigStorage.getKeyPrivate());
          String apbNonce = SignUtils.randomStr();
@@ -138,6 +149,7 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
      */
     @Override
     public boolean signVerify(Map<String, Object> params, String sign) {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return SignUtils.valueOf(payConfigStorage.getSignType()).verify(params, sign, "&key=" + payConfigStorage.getKeyPublic(), payConfigStorage.getInputCharset());
     }
 
@@ -183,7 +195,7 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
         int retryTimes = 0;
         do {
         try {
-            JSONObject result = requestTemplate.doExecute(uri, request, JSONObject.class, method);
+            JSONObject result = getRequestTemplate().doExecute(uri, request, JSONObject.class, method);
             if ( 0 != result.getIntValue("errorcode")){
               throw new PayErrorException(new YdPayError(result.getIntValue("errorcode"), result.getString("msg"), result.toJSONString()));
             }
@@ -192,13 +204,14 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
             PayError error = e.getPayError();
             if ("401".equals(error.getErrorCode()) ||  "500".equals(error.getErrorCode())) {
                 try {
-                    int sleepMillis = retrySleepMillis * (1 << retryTimes);
+                    int sleepMillis = getRetrySleepMillis() * (1 << retryTimes);
                     LOG.debug(String.format("友店微信系统繁忙，(%s)ms 后重试(第%s次)", sleepMillis, retryTimes + 1));
                     Thread.sleep(sleepMillis);
                 } catch (InterruptedException e1) {
                     throw new PayErrorException(new YdPayError(-1, "友店支付服务端重试失败", e1.getMessage()));
                 }
                 // 强制设置wxMpConfigStorage它的access token过期了，这样在下一次请求里就会刷新access token
+                PayConfigStorage payConfigStorage =getPayConfigStorage();
                 payConfigStorage.expireAccessToken();
                 //进行重新登陆授权
                 login();
@@ -207,7 +220,7 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
             }
         }
 
-        } while (++retryTimes < maxRetryTimes);
+        } while (++retryTimes < getMaxRetryTimes());
 
         throw new PayErrorException(new YdPayError(-1, "友店微信服务端异常，超出重试次数"));
     }
@@ -229,6 +242,7 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
         data.putAll(order.getAttrs());
         data =  preOrderHandler(data, order);
         String apbNonce = SignUtils.randomStr();
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         String sign = createSign(SignUtils.parameterText(data, "") + apbNonce, payConfigStorage.getInputCharset());
         data.put("PayMoney", data.remove("paymoney"));
         String params =  SignUtils.parameterText(data) +  "&apb_nonce=" + apbNonce + "&sign=" + sign;
@@ -257,6 +271,7 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
      */
     @Override
     public String createSign(String content, String characterEncoding) {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return  SignUtils.valueOf(payConfigStorage.getSignType().toUpperCase()).createSign(content, "&source=http://life.51youdian.com", characterEncoding);
     }
 
@@ -304,6 +319,7 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
         builder.put("return_code", code.toUpperCase());
         builder.put("return_msg", message);
         builder.put("nonce_str", SignUtils.randomStr());
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         String sgin = SignUtils.valueOf(payConfigStorage.getSignType()).sign(builder, "&key=" + payConfigStorage.getKeyPrivate(), payConfigStorage.getInputCharset());
         return PayOutMessage.TEXT().content("{\"return_code\":\""+builder.get("return_code")+"\",\"return_msg\":\""+builder.get("return_msg")+"\",\"nonce_str\":\""+builder.get("nonce_str")+"\",\"sign\":\""+ sgin +"\"}").build();
     }
@@ -364,6 +380,7 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
     public Map<String, Object> query(String tradeNo, String outTradeNo) {
         String apbNonce = SignUtils.randomStr();
         TreeMap<String, String> data = new TreeMap<>();
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         data.put("access_token",  payConfigStorage.getAccessToken());
 
         if (StringUtils.isEmpty(tradeNo)){
@@ -396,6 +413,7 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
     public Map<String, Object> refund(RefundOrder refundOrder) {
         String apbNonce = SignUtils.randomStr();
         TreeMap<String, String> data = new TreeMap<>();
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         data.put("access_token",  payConfigStorage.getAccessToken());
 
         if (StringUtils.isEmpty(refundOrder.getOutTradeNo())){
@@ -444,15 +462,6 @@ public class WxYouDianPayService extends BasePayService<WxYouDianPayConfigStorag
         return Collections.emptyMap();
     }
 
-
-
-    public WxYouDianPayService(WxYouDianPayConfigStorage payConfigStorage) {
-        super(payConfigStorage);
-    }
-
-    public WxYouDianPayService(WxYouDianPayConfigStorage payConfigStorage, HttpConfigStorage configStorage) {
-        super(payConfigStorage, configStorage);
-    }
 
     /**
      * 根据交易类型获取请求地址

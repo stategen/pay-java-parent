@@ -1,9 +1,8 @@
 package com.egzosn.pay.payoneer.api;
 
-import com.egzosn.pay.common.api.PayService;
-import com.egzosn.pay.common.bean.PayOrder;
-
 import java.util.Map;
+
+import com.egzosn.pay.common.api.PayService;
 
 /**
  * 高级支付接口
@@ -16,7 +15,7 @@ import java.util.Map;
  * 
  */
 
-public interface AdvancedPayService extends PayService<PayoneerConfigStorage> {
+public interface AdvancedPayService extends PayService<IPayoneerConfigStorage> {
     /**
      * 获取授权页面
      * @param payeeId 用户id

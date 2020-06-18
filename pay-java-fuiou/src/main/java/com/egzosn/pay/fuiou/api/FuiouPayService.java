@@ -1,20 +1,27 @@
 package com.egzosn.pay.fuiou.api;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import com.alibaba.fastjson.JSONObject;
 import com.egzosn.pay.common.api.BasePayService;
-import com.egzosn.pay.common.bean.*;
+import com.egzosn.pay.common.api.PayConfigStorage;
+import com.egzosn.pay.common.bean.MethodType;
+import com.egzosn.pay.common.bean.PayMessage;
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.common.bean.PayOutMessage;
+import com.egzosn.pay.common.bean.RefundOrder;
+import com.egzosn.pay.common.bean.TransactionType;
 import com.egzosn.pay.common.exception.PayErrorException;
-import com.egzosn.pay.common.http.HttpConfigStorage;
 import com.egzosn.pay.common.http.UriVariables;
 import com.egzosn.pay.common.util.DateUtils;
 import com.egzosn.pay.common.util.Util;
 import com.egzosn.pay.common.util.sign.SignUtils;
 import com.egzosn.pay.common.util.str.StringUtils;
 import com.egzosn.pay.fuiou.bean.FuiouTransactionType;
-
-import java.awt.image.BufferedImage;
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.util.*;
 
 /**
  * @author Actinia
@@ -23,7 +30,7 @@ import java.util.*;
  * create 2017 2017/1/16 0016
  * </pre>
  */
-public class FuiouPayService extends BasePayService<FuiouPayConfigStorage> {
+public class FuiouPayService extends BasePayService<IFuiouPayConfigStorage> {
 
     /**
      * 正式域名
@@ -66,6 +73,7 @@ public class FuiouPayService extends BasePayService<FuiouPayConfigStorage> {
      */
     @Override
     public String getReqUrl(TransactionType transactionType){
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return payConfigStorage.isTest() ? DEV_URL_FUIOU_BASE_DOMAIN : URL_FUIOU_BASE_DOMAIN;
     }
     /**
@@ -75,23 +83,6 @@ public class FuiouPayService extends BasePayService<FuiouPayConfigStorage> {
     public String getReqUrl(){
         return getReqUrl(null);
     }
-
-    /**
-     * 构造函数，初始化时候使用
-     * @param payConfigStorage 支付账户配置信息
-     * @param configStorage 网络代理配置
-     */
-    public FuiouPayService (FuiouPayConfigStorage payConfigStorage, HttpConfigStorage configStorage) {
-        super(payConfigStorage, configStorage);
-    }
-    /**
-     * 构造函数，初始化时候使用
-     * @param payConfigStorage 支付账户配置信息
-     */
-    public FuiouPayService (FuiouPayConfigStorage payConfigStorage) {
-        super(payConfigStorage);
-    }
-
 
     /**
      * 回调校验
@@ -122,7 +113,7 @@ public class FuiouPayService extends BasePayService<FuiouPayConfigStorage> {
      */
     @Override
     public boolean signVerify(Map<String, Object> params, String responseSign) {
-
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         String sign = createSign(SignUtils.parameters2MD5Str(params, "|"), payConfigStorage.getInputCharset());
 
         return responseSign.equals(sign);
@@ -137,6 +128,7 @@ public class FuiouPayService extends BasePayService<FuiouPayConfigStorage> {
     @Override
     public boolean verifySource(String orderId) {
         LinkedHashMap<String, Object> params = new LinkedHashMap<String, Object>(3);
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         params.put("mchnt_cd", payConfigStorage.getPid());
         params.put("order_id", orderId);
         params.put("md5", createSign(SignUtils.parameters2MD5Str(params, "|"), payConfigStorage.getInputCharset()));
@@ -160,6 +152,7 @@ public class FuiouPayService extends BasePayService<FuiouPayConfigStorage> {
         }
 
         Map<String, Object> parameters = getOrderInfo(order);
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         String sign = createSign(SignUtils.parameters2MD5Str(parameters, "|"), payConfigStorage.getInputCharset());
         parameters.put("md5", sign);
         return parameters;
@@ -174,6 +167,7 @@ public class FuiouPayService extends BasePayService<FuiouPayConfigStorage> {
 
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<String, Object>();
         //商户代码
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put("mchnt_cd", payConfigStorage.getPid());
         //商户订单号
         parameters.put("order_id", order.getOutTradeNo());
@@ -215,6 +209,7 @@ public class FuiouPayService extends BasePayService<FuiouPayConfigStorage> {
      */
     @Override
     public String createSign(String content, String characterEncoding) {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return SignUtils.valueOf(payConfigStorage.getSignType().toUpperCase()).createSign(content, "|" + payConfigStorage.getKeyPrivate(), characterEncoding);
     }
 
@@ -348,6 +343,7 @@ public class FuiouPayService extends BasePayService<FuiouPayConfigStorage> {
     public Map<String, Object> query(String tradeNo, String outTradeNo) {
 
         LinkedHashMap<String, Object> params = new LinkedHashMap<>();
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         params.put("mchnt_cd", payConfigStorage.getPid());
         params.put("order_id", outTradeNo);
         params.put("md5", createSign(SignUtils.parameters2MD5Str(params, "|"), payConfigStorage.getInputCharset()));
@@ -381,6 +377,7 @@ public class FuiouPayService extends BasePayService<FuiouPayConfigStorage> {
     @Override
     public Map<String, Object> refund(RefundOrder refundOrder) {
         Map<String, Object> params = new HashMap<>();
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         //商户代码
         params.put("mchnt_cd", payConfigStorage.getPid());
         //原交易日期

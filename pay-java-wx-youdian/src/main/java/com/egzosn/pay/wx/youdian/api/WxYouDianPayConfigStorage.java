@@ -10,7 +10,7 @@ import com.egzosn.pay.common.api.BasePayConfigStorage;
  *         email egzosn@gmail.com
  *         date 2017/01/12 22:58
  */
-public class WxYouDianPayConfigStorage extends BasePayConfigStorage {
+public class WxYouDianPayConfigStorage extends BasePayConfigStorage implements IWxYouDianPayConfigStorage {
 
 
     /**

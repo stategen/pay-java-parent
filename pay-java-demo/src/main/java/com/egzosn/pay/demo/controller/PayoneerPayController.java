@@ -1,22 +1,29 @@
 package com.egzosn.pay.demo.controller;
 
-import com.egzosn.pay.common.bean.*;
-import com.egzosn.pay.common.http.HttpConfigStorage;
-import com.egzosn.pay.demo.request.QueryOrder;
-import com.egzosn.pay.payoneer.api.PayoneerConfigStorage;
-import com.egzosn.pay.payoneer.api.PayoneerPayService;
-import com.egzosn.pay.payoneer.bean.PayoneerTransactionType;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.egzosn.pay.common.bean.DefaultCurType;
+import com.egzosn.pay.common.bean.MsgType;
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.common.bean.RefundOrder;
+import com.egzosn.pay.common.bean.TransactionType;
+import com.egzosn.pay.common.bean.TransferOrder;
+import com.egzosn.pay.common.http.HttpConfigStorage;
+import com.egzosn.pay.demo.request.QueryOrder;
+import com.egzosn.pay.payoneer.api.PayoneerConfigStorage;
+import com.egzosn.pay.payoneer.api.PayoneerPayService;
+import com.egzosn.pay.payoneer.bean.PayoneerTransactionType;
 
 /**
  * @author egan
@@ -40,7 +47,8 @@ public class PayoneerPayController {
         configStorage.setApiPassword("PayoneerPay API password");
         // 是否为测试账号，沙箱环境
         configStorage.setTest(true);
-        service = new PayoneerPayService(configStorage);
+        service = new PayoneerPayService();
+        service.setPayConfigStorage(configStorage);
 
         //请求连接池配置
         HttpConfigStorage httpConfigStorage = new HttpConfigStorage();
@@ -48,7 +56,7 @@ public class PayoneerPayController {
         httpConfigStorage.setMaxTotal(20);
         //默认的每个路由的最大连接数
         httpConfigStorage.setDefaultMaxPerRoute(10);
-        service.setRequestTemplateConfigStorage(httpConfigStorage);
+        configStorage.setRequestTemplateConfigStorage(httpConfigStorage);
 
         //以下不建议进行使用，会引起两次请求的问题
         //Basic Auth

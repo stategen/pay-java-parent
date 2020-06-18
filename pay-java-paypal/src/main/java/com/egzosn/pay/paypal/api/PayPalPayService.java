@@ -1,10 +1,32 @@
 package com.egzosn.pay.paypal.api;
 
 
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.locks.Lock;
+
+import org.apache.http.Header;
+import org.apache.http.entity.ContentType;
+import org.apache.http.message.BasicHeader;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.egzosn.pay.common.api.BasePayService;
-import com.egzosn.pay.common.bean.*;
+import com.egzosn.pay.common.api.PayConfigStorage;
+import com.egzosn.pay.common.bean.DefaultCurType;
+import com.egzosn.pay.common.bean.MethodType;
+import com.egzosn.pay.common.bean.PayMessage;
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.common.bean.PayOutMessage;
+import com.egzosn.pay.common.bean.RefundOrder;
+import com.egzosn.pay.common.bean.TransactionType;
 import com.egzosn.pay.common.bean.result.PayException;
 import com.egzosn.pay.common.exception.PayErrorException;
 import com.egzosn.pay.common.http.HttpHeader;
@@ -12,15 +34,12 @@ import com.egzosn.pay.common.http.HttpStringEntity;
 import com.egzosn.pay.common.util.Util;
 import com.egzosn.pay.common.util.str.StringUtils;
 import com.egzosn.pay.paypal.bean.PayPalTransactionType;
-import com.egzosn.pay.paypal.bean.order.*;
-import org.apache.http.Header;
-import org.apache.http.entity.ContentType;
-import org.apache.http.message.BasicHeader;
-
-import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.locks.Lock;
+import com.egzosn.pay.paypal.bean.order.Amount;
+import com.egzosn.pay.paypal.bean.order.Links;
+import com.egzosn.pay.paypal.bean.order.Payer;
+import com.egzosn.pay.paypal.bean.order.Payment;
+import com.egzosn.pay.paypal.bean.order.RedirectUrls;
+import com.egzosn.pay.paypal.bean.order.Transaction;
 
 /**
  * 贝宝支付配置存储
@@ -29,7 +48,7 @@ import java.util.concurrent.locks.Lock;
  * email egzosn@gmail.com
  * date 2018-4-8 ‏‎22:15:09
  */
-public class PayPalPayService extends BasePayService<PayPalConfigStorage>{
+public class PayPalPayService extends BasePayService<IPayPalConfigStorage>{
 
     /**
      * 沙箱环境
@@ -46,14 +65,9 @@ public class PayPalPayService extends BasePayService<PayPalConfigStorage>{
      */
     @Override
     public String getReqUrl(TransactionType transactionType){
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return (payConfigStorage.isTest() ? SANDBOX_REQ_URL : REQ_URL) + transactionType.getMethod();
     }
-
-
-    public PayPalPayService(PayPalConfigStorage payConfigStorage) {
-        super(payConfigStorage);
-    }
-
 
 
     /**
@@ -75,6 +89,7 @@ public class PayPalPayService extends BasePayService<PayPalConfigStorage>{
      * @throws PayErrorException 支付异常
      */
     public String getAccessToken(boolean forceRefresh) throws PayErrorException {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         Lock lock = payConfigStorage.getAccessTokenLock();
         try {
             lock.lock();
@@ -176,6 +191,7 @@ public class PayPalPayService extends BasePayService<PayPalConfigStorage>{
         payment.setPayer(payer);
         payment.setTransactions(transactions);
         RedirectUrls redirectUrls = new RedirectUrls();
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         //取消按钮转跳地址
         redirectUrls.setCancelUrl(payConfigStorage.getNotifyUrl());
         //发起付款后的页面转跳地址

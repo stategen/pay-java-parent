@@ -2,6 +2,22 @@
 package com.egzosn.pay.demo.controller;
 
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.egzosn.pay.ali.api.AliPayConfigStorage;
 import com.egzosn.pay.ali.api.AliPayService;
 import com.egzosn.pay.ali.bean.AliTransactionType;
@@ -16,20 +32,6 @@ import com.egzosn.pay.common.util.sign.SignUtils;
 import com.egzosn.pay.demo.request.QueryOrder;
 import com.egzosn.pay.demo.service.handler.AliPayMessageHandler;
 import com.egzosn.pay.demo.service.interceptor.AliPayMessageInterceptor;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
-import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletRequest;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 
 /**
@@ -68,7 +70,10 @@ public class AliPayController {
         httpConfigStorage.setMaxTotal(20);
         //默认的每个路由的最大连接数
         httpConfigStorage.setDefaultMaxPerRoute(10);
-        service =  new AliPayService(aliPayConfigStorage, httpConfigStorage);
+        
+        aliPayConfigStorage.setRequestTemplateConfigStorage(httpConfigStorage);
+        service =  new AliPayService();
+        service.setPayConfigStorage(aliPayConfigStorage);
         //增加支付回调消息拦截器
         service.addPayMessageInterceptor(new AliPayMessageInterceptor());
         //设置回调消息处理

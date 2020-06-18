@@ -1,11 +1,11 @@
 package com.egzosn.pay.common.api;
 
-import com.egzosn.pay.common.bean.CertStoreType;
-import com.egzosn.pay.common.bean.MsgType;
-import com.egzosn.pay.common.util.sign.CertDescriptor;
-
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import com.egzosn.pay.common.bean.MsgType;
+import com.egzosn.pay.common.http.HttpConfigStorage;
+import com.egzosn.pay.common.http.HttpRequestTemplate;
 
 /**
  * 支付基础配置存储
@@ -82,6 +82,9 @@ public abstract class BasePayConfigStorage implements PayConfigStorage {
      * 是否为证书签名
      */
     private boolean isCertSign = false;
+    
+    /***多appid下，将网络设置存入payConfigStore中 --by niaoge*/
+    private HttpRequestTemplate requestTemplate;
 
 
     @Override
@@ -245,6 +248,23 @@ public abstract class BasePayConfigStorage implements PayConfigStorage {
     public void setCertSign(boolean certSign) {
         isCertSign = certSign;
     }
-
+   
+    @Override
+    public HttpRequestTemplate getRequestTemplate() {
+        if (this.requestTemplate==null) {
+           this.requestTemplate =new HttpRequestTemplate();
+        }
+        return this.requestTemplate;
+    }
+    
+    public void setRequestTemplate(HttpRequestTemplate requestTemplate) {
+        this.requestTemplate = requestTemplate;
+    }
+    
+    @Override
+    public PayConfigStorage setRequestTemplateConfigStorage(HttpConfigStorage httpConfigStorage) {
+        this.requestTemplate = new HttpRequestTemplate(httpConfigStorage);
+        return this;
+    }
 
 }

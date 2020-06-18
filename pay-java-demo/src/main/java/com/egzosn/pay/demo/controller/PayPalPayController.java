@@ -1,6 +1,19 @@
 package com.egzosn.pay.demo.controller;
 
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.egzosn.pay.common.api.PayService;
 import com.egzosn.pay.common.bean.DefaultCurType;
 import com.egzosn.pay.common.bean.PayOrder;
@@ -9,17 +22,6 @@ import com.egzosn.pay.common.http.HttpConfigStorage;
 import com.egzosn.pay.paypal.api.PayPalConfigStorage;
 import com.egzosn.pay.paypal.api.PayPalPayService;
 import com.egzosn.pay.paypal.bean.PayPalTransactionType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * 发起支付入口
@@ -45,7 +47,8 @@ public class PayPalPayController {
         storage.setReturnUrl("http://www.egzosn.com/payPal/payBack.json");
         //取消按钮转跳地址,这里用异步通知地址的兼容的做法
         storage.setNotifyUrl("http://www.egzosn.com/pay/cancel");
-        service = new PayPalPayService(storage);
+        service = new PayPalPayService();
+        service.setPayConfigStorage(storage);
 
         //请求连接池配置
         HttpConfigStorage httpConfigStorage = new HttpConfigStorage();
@@ -53,8 +56,9 @@ public class PayPalPayController {
         httpConfigStorage.setMaxTotal(20);
         //默认的每个路由的最大连接数
         httpConfigStorage.setDefaultMaxPerRoute(10);
-        service.setRequestTemplateConfigStorage(httpConfigStorage);
+        storage.setRequestTemplateConfigStorage(httpConfigStorage);
     }
+        
 
 
     /**

@@ -1,15 +1,15 @@
+import java.awt.image.BufferedImage;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
+
 import com.egzosn.pay.common.bean.MethodType;
 import com.egzosn.pay.common.bean.PayOrder;
 import com.egzosn.pay.common.bean.RefundOrder;
 import com.egzosn.pay.union.api.UnionPayConfigStorage;
 import com.egzosn.pay.union.api.UnionPayService;
 import com.egzosn.pay.union.bean.UnionTransactionType;
-
-import java.awt.image.BufferedImage;
-import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
 
 /**
  *
@@ -50,7 +50,7 @@ public class PayTest {
         //是否为测试账号，沙箱环境
         unionPayConfigStorage.setTest(true);
         //支付服务
-        UnionPayService service = new UnionPayService(unionPayConfigStorage);
+        UnionPayService service = new UnionPayService().setPayConfigStorage(unionPayConfigStorage);
         //支付订单基础信息
         PayOrder payOrder = new PayOrder("订单title", "摘要",  new BigDecimal(0.01) , new SimpleDateFormat("yyyyMMddHHmmss").format(System.currentTimeMillis()));
 

@@ -1,10 +1,10 @@
 package com.egzosn.pay.union.api;
 
-import com.egzosn.pay.common.api.BasePayConfigStorage;
-import com.egzosn.pay.common.bean.CertStoreType;
-
 import java.io.IOException;
 import java.io.InputStream;
+
+import com.egzosn.pay.common.api.BasePayConfigStorage;
+import com.egzosn.pay.common.bean.CertStoreType;
 
 
 /**
@@ -15,7 +15,7 @@ import java.io.InputStream;
  *           create 2017 2017/11/4 0004
  *         </pre>
  */
-public class UnionPayConfigStorage extends BasePayConfigStorage {
+public class UnionPayConfigStorage extends BasePayConfigStorage implements IUnionPayConfigStorage {
 
 
     /**
@@ -75,6 +75,7 @@ public class UnionPayConfigStorage extends BasePayConfigStorage {
         this.keyPrivateCert = keyPrivateCert;
     }
 
+    @Override
     public InputStream getKeyPrivateCertInputStream() throws IOException {
         return certStoreType.getInputStream(keyPrivateCert);
     }
@@ -120,10 +121,13 @@ public class UnionPayConfigStorage extends BasePayConfigStorage {
     public String getAcpRootCert() {
         return (String) acpRootCert;
     }
+    
+    @Override
     public InputStream getAcpMiddleCertInputStream() throws IOException {
         return certStoreType.getInputStream(acpMiddleCert);
     }
 
+    @Override
     public InputStream getAcpRootCertInputStream() throws IOException {
         return certStoreType.getInputStream(acpRootCert);
     }

@@ -2,20 +2,22 @@
 package com.egzosn.pay.demo.controller;
 
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.egzosn.pay.common.api.PayService;
 import com.egzosn.pay.common.bean.PayOrder;
 import com.egzosn.pay.fuiou.api.FuiouPayConfigStorage;
 import com.egzosn.pay.fuiou.api.FuiouPayService;
 import com.egzosn.pay.fuiou.bean.FuiouTransactionType;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * 发起支付入口
@@ -45,7 +47,8 @@ public class FuiouPayController {
         fuiouPayConfigStorage.setTest(true);
 
 
-        service = new FuiouPayService(fuiouPayConfigStorage);
+        service = new FuiouPayService();
+        service.setPayConfigStorage(fuiouPayConfigStorage);
 
 
         //设置回调消息处理

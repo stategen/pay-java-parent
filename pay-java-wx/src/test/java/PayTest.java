@@ -1,4 +1,9 @@
 
+import java.awt.image.BufferedImage;
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.UUID;
+
 import com.egzosn.pay.common.bean.CertStoreType;
 import com.egzosn.pay.common.bean.MethodType;
 import com.egzosn.pay.common.bean.PayOrder;
@@ -8,11 +13,6 @@ import com.egzosn.pay.wx.api.WxPayService;
 import com.egzosn.pay.wx.bean.RedpackOrder;
 import com.egzosn.pay.wx.bean.WxSendredpackType;
 import com.egzosn.pay.wx.bean.WxTransactionType;
-
-import java.awt.image.BufferedImage;
-import java.math.BigDecimal;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  *
@@ -42,7 +42,9 @@ public class PayTest {
         //是否为测试账号，沙箱环境 此处暂未实现
         wxPayConfigStorage.setTest(true);
         //支付服务
-        WxPayService service =  new WxPayService(wxPayConfigStorage);
+        WxPayService service =  new WxPayService();
+        service.setPayConfigStorage(wxPayConfigStorage);
+        
         //支付订单基础信息
         PayOrder payOrder = new PayOrder("订单title", "摘要",  new BigDecimal(0.01) , UUID.randomUUID().toString().replace("-", ""));
         /*-----------扫码付-------------------*/
@@ -94,7 +96,9 @@ public class PayTest {
         httpConfigStorage.setStorePassword("默认商户号");
         //设置ssl证书对应的存储方式，这里默认为文件地址
         httpConfigStorage.setCertStoreType(CertStoreType.PATH);
-        service.setRequestTemplateConfigStorage(httpConfigStorage);
+        
+        //多appid,设置到wxPayConfigStorage中 ,--by niaoge
+        wxPayConfigStorage.setRequestTemplateConfigStorage(httpConfigStorage);
 
         RedpackOrder redpackOrder = new RedpackOrder();
 

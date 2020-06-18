@@ -2,7 +2,7 @@ package com.egzosn.pay.baidu.api;
 
 import com.egzosn.pay.common.api.BasePayConfigStorage;
 
-public class BaiduPayConfigStorage extends BasePayConfigStorage {
+public class BaiduPayConfigStorage extends BasePayConfigStorage implements IBaiduPayConfigStorage {
     private String appid;
     private String dealId;
     

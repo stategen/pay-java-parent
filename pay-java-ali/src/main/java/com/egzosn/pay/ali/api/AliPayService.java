@@ -1,5 +1,10 @@
 package com.egzosn.pay.ali.api;
 
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.egzosn.pay.ali.bean.AliPayMessage;
@@ -7,17 +12,23 @@ import com.egzosn.pay.ali.bean.AliTransactionType;
 import com.egzosn.pay.ali.bean.AliTransferType;
 import com.egzosn.pay.ali.bean.OrderSettle;
 import com.egzosn.pay.common.api.BasePayService;
-import com.egzosn.pay.common.bean.*;
+import com.egzosn.pay.common.api.PayConfigStorage;
+import com.egzosn.pay.common.bean.MethodType;
+import com.egzosn.pay.common.bean.Order;
+import com.egzosn.pay.common.bean.PayMessage;
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.common.bean.PayOutMessage;
+import com.egzosn.pay.common.bean.RefundOrder;
+import com.egzosn.pay.common.bean.TransactionType;
+import com.egzosn.pay.common.bean.TransferOrder;
+import com.egzosn.pay.common.bean.TransferType;
 import com.egzosn.pay.common.bean.result.PayException;
 import com.egzosn.pay.common.exception.PayErrorException;
-import com.egzosn.pay.common.http.HttpConfigStorage;
 import com.egzosn.pay.common.http.UriVariables;
 import com.egzosn.pay.common.util.DateUtils;
 import com.egzosn.pay.common.util.Util;
 import com.egzosn.pay.common.util.sign.SignUtils;
 import com.egzosn.pay.common.util.str.StringUtils;
-
-import java.util.*;
 
 /**
  * 支付宝支付服务
@@ -27,7 +38,7 @@ import java.util.*;
  *         email egzosn@gmail.com
  *         date 2017-2-22 20:09
  */
-public class AliPayService extends BasePayService<AliPayConfigStorage> {
+public class AliPayService extends BasePayService<IAliPayConfigStorage> {
     
     /**
      * 正式测试环境
@@ -76,7 +87,7 @@ public class AliPayService extends BasePayService<AliPayConfigStorage> {
      */
     @Override
     public String getReqUrl(TransactionType transactionType) {
-        return payConfigStorage.isTest() ? DEV_REQ_URL : HTTPS_REQ_URL;
+        return getPayConfigStorage().isTest() ? DEV_REQ_URL : HTTPS_REQ_URL;
     }
     /**
      * 获取对应的请求地址
@@ -87,14 +98,6 @@ public class AliPayService extends BasePayService<AliPayConfigStorage> {
         return getReqUrl(null);
     }
 
-
-    public AliPayService(AliPayConfigStorage payConfigStorage, HttpConfigStorage configStorage) {
-        super(payConfigStorage, configStorage);
-    }
-
-    public AliPayService(AliPayConfigStorage payConfigStorage) {
-        super(payConfigStorage);
-    }
 
 
     /**
@@ -124,7 +127,7 @@ public class AliPayService extends BasePayService<AliPayConfigStorage> {
      */
     @Override
     public boolean signVerify(Map<String, Object> params, String sign) {
-
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         if (params instanceof JSONObject) {
             for (Map.Entry<String, Object> entry : params.entrySet()) {
                 if (SIGN.equals(entry.getKey())) {
@@ -162,6 +165,7 @@ public class AliPayService extends BasePayService<AliPayConfigStorage> {
      * @return 请求参数
      */
     private Map<String, Object> setSign(Map<String, Object> parameters) {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put("sign_type", payConfigStorage.getSignType());
         String sign = createSign(SignUtils.parameterText(parameters, "&", SIGN), payConfigStorage.getInputCharset());
 
@@ -196,7 +200,9 @@ public class AliPayService extends BasePayService<AliPayConfigStorage> {
 
 
         Map<String, Object> orderInfo = getPublicParameters(order.getTransactionType());
-
+        
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
+        
         orderInfo.put("notify_url", payConfigStorage.getNotifyUrl());
         orderInfo.put("format", "json");
         setAppAuthToken(orderInfo, order.getAttrs());
@@ -252,6 +258,7 @@ public class AliPayService extends BasePayService<AliPayConfigStorage> {
      */
     private Map<String, Object> getPublicParameters(TransactionType transactionType) {
         Map<String, Object> orderInfo = new TreeMap<>();
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         orderInfo.put("app_id", payConfigStorage.getAppid());
         orderInfo.put("method", transactionType.getMethod());
         orderInfo.put("charset", payConfigStorage.getInputCharset());
@@ -451,7 +458,7 @@ public class AliPayService extends BasePayService<AliPayConfigStorage> {
         parameters.put(BIZ_CONTENT, JSON.toJSONString(bizContent));
         //设置签名
         setSign(parameters);
-        return requestTemplate.getForObject(getReqUrl() + "?" + UriVariables.getMapToParameters(parameters), JSONObject.class);
+        return getRequestTemplate().getForObject(getReqUrl() + "?" + UriVariables.getMapToParameters(parameters), JSONObject.class);
     }
 
 
@@ -476,7 +483,7 @@ public class AliPayService extends BasePayService<AliPayConfigStorage> {
         parameters.put(BIZ_CONTENT, JSON.toJSONString(bizContent));
         //设置签名
         setSign(parameters);
-        return requestTemplate.getForObject(getReqUrl() + "?" + UriVariables.getMapToParameters(parameters), JSONObject.class);
+        return getRequestTemplate().getForObject(getReqUrl() + "?" + UriVariables.getMapToParameters(parameters), JSONObject.class);
 
     }
 
@@ -500,7 +507,7 @@ public class AliPayService extends BasePayService<AliPayConfigStorage> {
         parameters.put(BIZ_CONTENT, JSON.toJSONString(bizContent));
         //设置签名
         setSign(parameters);
-        return requestTemplate.getForObject(getReqUrl() + "?" + UriVariables.getMapToParameters(parameters), JSONObject.class);
+        return getRequestTemplate().getForObject(getReqUrl() + "?" + UriVariables.getMapToParameters(parameters), JSONObject.class);
     }
 
 
@@ -534,8 +541,7 @@ public class AliPayService extends BasePayService<AliPayConfigStorage> {
         parameters.put(BIZ_CONTENT, getContentToJson((String) tradeNoOrBillDate, outTradeNoBillType));
         //设置签名
         setSign(parameters);
-
-        return requestTemplate.getForObject(getReqUrl() + "?" + UriVariables.getMapToParameters(parameters), JSONObject.class);
+        return getRequestTemplate().getForObject(getReqUrl() + "?" + UriVariables.getMapToParameters(parameters), JSONObject.class);
     }
 
     /**

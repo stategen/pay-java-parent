@@ -1,20 +1,27 @@
 package com.egzosn.pay.yiji.api;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.TreeMap;
+
 import com.alibaba.fastjson.JSONObject;
 import com.egzosn.pay.common.api.BasePayService;
-import com.egzosn.pay.common.bean.*;
+import com.egzosn.pay.common.api.PayConfigStorage;
+import com.egzosn.pay.common.bean.DefaultCurType;
+import com.egzosn.pay.common.bean.MethodType;
+import com.egzosn.pay.common.bean.PayMessage;
+import com.egzosn.pay.common.bean.PayOrder;
+import com.egzosn.pay.common.bean.PayOutMessage;
+import com.egzosn.pay.common.bean.RefundOrder;
+import com.egzosn.pay.common.bean.TransactionType;
+import com.egzosn.pay.common.bean.TransferOrder;
 import com.egzosn.pay.common.exception.PayErrorException;
-import com.egzosn.pay.common.http.HttpConfigStorage;
 import com.egzosn.pay.common.util.DateUtils;
 import com.egzosn.pay.common.util.Util;
 import com.egzosn.pay.common.util.sign.SignUtils;
 import com.egzosn.pay.common.util.str.StringUtils;
 import com.egzosn.pay.yiji.bean.YiJiTransactionType;
-
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
-import java.util.TreeMap;
 
 
 /**
@@ -25,7 +32,7 @@ import java.util.TreeMap;
  *         email egzosn@gmail.com
  *          * date 2019/04/15 22:51
  */
-public class YiJiPayService extends BasePayService<YiJiPayConfigStorage> {
+public class YiJiPayService extends BasePayService<IYiJiPayConfigStorage> {
 
     /**
      * 正式测试环境
@@ -53,6 +60,7 @@ public class YiJiPayService extends BasePayService<YiJiPayConfigStorage> {
      */
     @Override
     public String getReqUrl(TransactionType transactionType) {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         if (payConfigStorage.isTest()){
             return DEV_REQ_URL;
         }else if (/*YiJiTransactionType.corderRemittanceSynOrder == transactionType ||*/ YiJiTransactionType.applyRemittranceWithSynOrder == transactionType){
@@ -61,15 +69,6 @@ public class YiJiPayService extends BasePayService<YiJiPayConfigStorage> {
             return HTTPS_REQ_URL;
         }
     }
-
-    public YiJiPayService(YiJiPayConfigStorage payConfigStorage, HttpConfigStorage configStorage) {
-        super(payConfigStorage, configStorage);
-    }
-
-    public YiJiPayService(YiJiPayConfigStorage payConfigStorage) {
-        super(payConfigStorage);
-    }
-
 
 
     /**
@@ -99,7 +98,7 @@ public class YiJiPayService extends BasePayService<YiJiPayConfigStorage> {
      */
     @Override
     public boolean signVerify(Map<String, Object> params, String sign) {
-
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         return SignUtils.valueOf(payConfigStorage.getSignType()).verify(params, sign, payConfigStorage.getKeyPublic(), payConfigStorage.getInputCharset());
     }
 
@@ -123,6 +122,7 @@ public class YiJiPayService extends BasePayService<YiJiPayConfigStorage> {
      * @return 请求参数
      */
     private Map<String, Object> setSign(Map<String, Object> parameters) {
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put("signType", payConfigStorage.getSignType());
         String sign = createSign(SignUtils.parameterText(parameters, "&", SIGN), payConfigStorage.getInputCharset());
 
@@ -158,7 +158,7 @@ public class YiJiPayService extends BasePayService<YiJiPayConfigStorage> {
         Map<String, Object> orderInfo = getPublicParameters(order.getTransactionType());
         orderInfo.put("orderNo", order.getOutTradeNo());
         orderInfo.put("outOrderNo", order.getOutTradeNo());
-
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         if (StringUtils.isNotEmpty(payConfigStorage.getSeller())){
             orderInfo.put("sellerUserId", payConfigStorage.getSeller());
         }
@@ -184,6 +184,7 @@ public class YiJiPayService extends BasePayService<YiJiPayConfigStorage> {
      */
     private Map<String, Object> getPublicParameters(TransactionType transactionType) {
         Map<String, Object> orderInfo = new TreeMap<>();
+        PayConfigStorage payConfigStorage =getPayConfigStorage();
         orderInfo.put("partnerId", payConfigStorage.getPid());
         orderInfo.put("returnUrl", payConfigStorage.getReturnUrl());
         orderInfo.put("notifyUrl", payConfigStorage.getNotifyUrl());
