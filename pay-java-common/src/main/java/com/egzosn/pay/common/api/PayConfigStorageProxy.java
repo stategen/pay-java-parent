@@ -24,21 +24,23 @@ public abstract class PayConfigStorageProxy<PC extends PayConfigStorage> impleme
      * 从获取ThreadLocal获取PayConfigStorage,为了防止内存泄露，需要用户代码实现ThreadLocal，线程休眠时自己释放数据， 或者用netty的FastThreadLocal自动释放数据,
      * 因为前期获得的Storage可能是个半成品，比如要利用已有数据从微信服务器上再获取签名，因为不能立即放入PAY_CONFIG_CACHES让其它线程拿到
      */
-    protected abstract PC getStorageFormThreadLocal();
+    public abstract PC getStorageFormThreadLocal();
     
     /***
      * 把 PayConfigStorage 放置到ThreadLocal中，@see PayConfigStorageProxy::getStorageFormThreadLocal
      */
-    protected abstract void setStorageToThreadLocal(PC payConfigStorage);
+    public abstract void setStorageToThreadLocal(PC payConfigStorage);
     
     /*** 获取放置appid的ThreadLocal,为了防止内存泄露，需要用户代码实现，线程休眠时自己释放，或者用netty的FastThreadLocal */
-    protected abstract String getAppidFromThreadLocal();
+    public abstract String getAppidFromThreadLocal();
     
-    protected abstract void setAppidToThreadLocal(String appid);
+    /*** 把appid放置到ThreadLocal中,为了防止内存泄露，需要用户代码实现，线程休眠时自己释放，或者用netty的FastThreadLocal */
+    public abstract void setAppidToThreadLocal(String appid);
     
     /*** 填充PayConfigStorage的各种属性,可以从数据库或者properties中拿到，包装 httpConfigStorage */
-    protected abstract void assignPayConfigStorage(String appid, PC payConfigStorage);
+    public abstract void assignPayConfigStorage(String appid, PC payConfigStorage);
     
+    /***获取当前 PayConfigStorage的类型,Class*/
     public abstract Class<? extends PC> getPayConfigStorageClz();
     
     /**
@@ -46,14 +48,15 @@ public abstract class PayConfigStorageProxy<PC extends PayConfigStorage> impleme
      */
     @SuppressWarnings("unchecked")
     public PC createProxy() {
-        return (PC) Proxy.newProxyInstance(getPayConfigStorageClz().getClassLoader(), getPayConfigStorageClz().getClass().getInterfaces(),
+        Class<? extends PC> payConfigStorageClz = getPayConfigStorageClz();
+        return (PC) Proxy.newProxyInstance(payConfigStorageClz.getClassLoader(), payConfigStorageClz.getInterfaces(),
                 this);
     }
     
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         PayConfigStorage payConfigStorage = getPayConfigStorage(true);
-        return method.invoke(payConfigStorage, method);
+        return method.invoke(payConfigStorage,args);
     }
     
     @SuppressWarnings("unchecked")

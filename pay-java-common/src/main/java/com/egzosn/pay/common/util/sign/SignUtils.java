@@ -4,14 +4,13 @@ package com.egzosn.pay.common.util.sign;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import javax.crypto.Mac;
@@ -213,64 +212,44 @@ public enum SignUtils implements SignType {
      * @param parameters 参数
      * @param separator 分隔符
      * @param ignoreNullValue 需要忽略NULL值
-     * @param ignoreKey 需要忽略添加的key
+     * @param ignoreKeys 需要忽略添加的key
      * @return 去掉空值与签名参数后的新签名，拼接后字符串
      */
-    public static String parameterText(Map parameters, String separator, boolean ignoreNullValue, String... ignoreKey ) {
+    @SuppressWarnings("unchecked")
+    public static String parameterText(Map parameters, String separator, boolean ignoreNullValue, String... ignoreKeys ) {
         if(parameters == null){
             return "";
         }
-        StringBuffer sb = new StringBuffer();
-        if (null != ignoreKey){
-            Arrays.sort(ignoreKey);
+        StringBuilder sb = new StringBuilder();
+        if (null != ignoreKeys){
+            Arrays.sort(ignoreKeys);
         }
         // TODO 2016/11/11 10:14 author: egan 已经排序好处理
-        if (parameters instanceof SortedMap) {
-            for (Map.Entry<String, Object> entry : (Set<Map.Entry<String, Object>>)parameters.entrySet()) {
-                Object v = entry.getValue();
-                if (null == v || "".equals(v.toString().trim()) || (null != ignoreKey && Arrays.binarySearch(ignoreKey, entry.getKey() ) >= 0)) {
-                    continue;
-                }
-                sb.append(entry.getKey() ).append("=").append( v.toString().trim()).append(separator);
-            }
-            if (sb.length() > 0 && !"".equals(separator)) {
-                sb.deleteCharAt(sb.length() - 1);
-            }
-            return sb.toString();
-
+        if (!(parameters instanceof SortedMap)) {
+            parameters = new TreeMap<String,Object>(parameters);  
         }
-
-
-        // TODO 2016/11/11 10:14 author: egan 未排序须处理
-        List<String> keys = new ArrayList<String>(parameters.keySet());
-        //排序
-        Collections.sort(keys);
-        for (String k : keys) {
-            String valueStr = "";
-            Object o = parameters.get(k);
-            if (ignoreNullValue && null == o) {
+            
+        for (Map.Entry<String, Object> entry : (Set<Map.Entry<String, Object>>)parameters.entrySet()) {
+            String key =entry.getKey();
+            if (null != ignoreKeys && Arrays.binarySearch(ignoreKeys, key)>= 0) {
+               continue; 
+            }
+            
+            Object v = entry.getValue();
+            String value = v!=null? v.toString().trim() : null ;
+            if (StringUtils.isEmpty(value)) {
                 continue;
             }
-            if (o instanceof String[]) {
-                String[] values = (String[]) o;
+            
+            if (sb.length()>0) {
+                sb.append(separator);
+            }
+            sb.append(key).append("=").append(value);
+        }
+        
+        String result =sb.toString();
+        return result;
 
-                for (int i = 0; i < values.length; i++) {
-                    String value = values[i].trim();
-                    if ("".equals(value)){ continue;}
-                    valueStr += (i == values.length - 1) ?  value :  value + ",";
-                }
-            } else {
-                valueStr = o.toString();
-            }
-            if (null == valueStr || "".equals(valueStr.toString().trim()) || (null != ignoreKey && Arrays.binarySearch(ignoreKey, k ) >= 0)) {
-                continue;
-            }
-            sb.append(k ).append("=").append( valueStr).append(separator);
-        }
-        if (sb.length() > 0) {
-            sb.deleteCharAt(sb.length() - 1);
-        }
-        return sb.toString();
     }
 
     /**

@@ -1,9 +1,16 @@
 package com.egzosn.pay.common.http;
 
-import com.egzosn.pay.common.bean.MethodType;
-import com.egzosn.pay.common.bean.result.PayException;
-import com.egzosn.pay.common.exception.PayErrorException;
-import com.egzosn.pay.common.util.str.StringUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.util.Map;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpHost;
@@ -24,15 +31,10 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContexts;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
-import java.util.Map;
+import com.egzosn.pay.common.bean.MethodType;
+import com.egzosn.pay.common.bean.result.PayException;
+import com.egzosn.pay.common.exception.PayErrorException;
+import com.egzosn.pay.common.util.str.StringUtils;
 
 /**
  * http请求工具
@@ -55,6 +57,7 @@ public class HttpRequestTemplate {
     protected HttpConfigStorage configStorage;
 
     private SSLConnectionSocketFactory sslsf;
+    
     /**
      *  获取代理带代理地址的 HttpHost
      * @return 获取代理带代理地址的 HttpHost
@@ -110,6 +113,7 @@ public class HttpRequestTemplate {
     }
 
 
+
     /**
      *  创建ssl配置
      * @param configStorage 请求配置
@@ -131,7 +135,8 @@ public class HttpRequestTemplate {
         try(InputStream instream = configStorage.getKeystoreInputStream()){
             //指定读取证书格式为PKCS12
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
-
+            
+            //微信里,storePassword指的是mth_id
             char[] password = configStorage.getStorePassword().toCharArray();
             //指定PKCS12的密码
             keyStore.load(instream, password);
@@ -345,7 +350,7 @@ public class HttpRequestTemplate {
         if (LOG.isDebugEnabled()) {
             LOG.debug(String.format("uri:%s, httpMethod:%s ", uri, method.name()));
         }
-        ClientHttpRequest<T> httpRequest = new ClientHttpRequest(uri ,method, request, null == configStorage ? null : configStorage.getCharset());
+        ClientHttpRequest<T> httpRequest = new ClientHttpRequest<T>(uri ,method, request, null == configStorage ? null : configStorage.getCharset());
         //判断是否有代理设置
         if (null != httpProxy){
             httpRequest.setProxy(httpProxy);

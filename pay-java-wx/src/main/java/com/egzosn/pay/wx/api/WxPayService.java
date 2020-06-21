@@ -289,18 +289,12 @@ public class WxPayService extends BasePayService<IWxPayConfigStorage> implements
 
     /**
      * 获取验签秘钥
-     * 考虑到测式环境，同时请求沙箱签名的请求不会很多，因此只需要调用中一次获得，不需要预先获取,但是些方法应该至少为protected,以方便提前调用获取sandboxSignkey --by niaoge
      * @return 验签秘钥
      */
     protected String getKeyPrivate() {
         IWxPayConfigStorage payConfigStorage =getPayConfigStorage();
         if (!payConfigStorage.isTest()) {
             return payConfigStorage.getKeyPrivate();
-        }
-        //沙箱有效天数为三天，不应该每次测试远程拿key  --by niaoge
-        String sandboxSignkey=payConfigStorage.getSandboxSignkey();
-        if (sandboxSignkey!=null && !sandboxSignkey.isEmpty()) {
-            return sandboxSignkey;
         }
         
         SortedMap<String, Object> parameters = new TreeMap<String, Object>();
@@ -312,7 +306,7 @@ public class WxPayService extends BasePayService<IWxPayConfigStorage> implements
 
         JSONObject result = getRequestTemplate().postForObject(getReqUrl(WxTransactionType.GETSIGNKEY), XML.getMap2Xml(parameters), JSONObject.class);
         if (SUCCESS.equals(result.get(RETURN_CODE))) {
-            sandboxSignkey = result.getString("sandbox_signkey");
+            String sandboxSignkey = result.getString("sandbox_signkey");
             payConfigStorage.setSandboxSignkey(sandboxSignkey);
             return sandboxSignkey;
         }
@@ -343,18 +337,21 @@ public class WxPayService extends BasePayService<IWxPayConfigStorage> implements
      */
     public String createSign(String content, String characterEncoding, boolean test) {
         PayConfigStorage payConfigStorage =getPayConfigStorage();
-        SignType signType = SignUtils.valueOf(payConfigStorage.getSignType().toUpperCase());
+        String sign = payConfigStorage.getSignType();
+        SignType signType = SignUtils.valueOf(sign.toUpperCase());
+        
         String keyPrivate = payConfigStorage.getKeyPrivate();
         if (test) {
             keyPrivate = getKeyPrivate();
-        } 
+        }
+        //TODO HMACSHA256 无效，为啥 by niaoge
         return signType.createSign(content + "&key=" + (signType == SignUtils.MD5 ? "" : keyPrivate), keyPrivate, characterEncoding).toUpperCase();
     }
 
     /**
      * 将请求参数或者请求流转化为 Map
      *
-     * @param parameterMap 请求参数
+     * @param parameterMap 请求参数            
      * @param is           请求流
      * @return 获得回调的请求参数
      */
@@ -410,7 +407,8 @@ public class WxPayService extends BasePayService<IWxPayConfigStorage> implements
         }
         if (WxTransactionType.MWEB.name().equals(orderInfo.get("trade_type"))) {
             PayConfigStorage payConfigStorage =getPayConfigStorage();
-            return String.format("<script type=\"text/javascript\">location.href=\"%s%s\"</script>", orderInfo.get("mweb_url"), StringUtils.isEmpty(payConfigStorage.getReturnUrl()) ? "" : "&redirect_url=" + URLEncoder.encode(payConfigStorage.getReturnUrl()));
+            return String.format("<script type=\"text/javascript\">location.href=\"%s%s\"</script>", orderInfo.get("mweb_url"), 
+                    StringUtils.isEmpty(payConfigStorage.getReturnUrl()) ? "" : "&redirect_url=" + URLEncoder.encode(payConfigStorage.getReturnUrl()));
         }
         throw new UnsupportedOperationException();
 

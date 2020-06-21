@@ -18,22 +18,22 @@ public abstract class PayConfigStorateProxyWithThreadLocal<PC extends PayConfigS
     
     @SuppressWarnings("unchecked")
     @Override
-    protected PC getStorageFormThreadLocal() {
+    public PC getStorageFormThreadLocal() {
         return (PC) PAY_CONFIGT_HREADLOCAL.get();
     }
     
     @Override
-    protected void setStorageToThreadLocal(PC payConfigStorage) {
+    public void setStorageToThreadLocal(PC payConfigStorage) {
         PAY_CONFIGT_HREADLOCAL.set(payConfigStorage);
     }
     
     @Override
-    protected String getAppidFromThreadLocal() {
+    public String getAppidFromThreadLocal() {
         return APPID_THREADLOCAL.get();
     }
     
     @Override
-    protected void setAppidToThreadLocal(String appid) {
+    public void setAppidToThreadLocal(String appid) {
         APPID_THREADLOCAL.set(appid);
     }
     

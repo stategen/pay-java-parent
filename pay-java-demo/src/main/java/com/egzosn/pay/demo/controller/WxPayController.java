@@ -58,7 +58,7 @@ public class WxPayController {
         }
         
         @Override
-        protected void assignPayConfigStorage(String appid, WxPayConfigStorage wxPayConfigStorage) {
+        public void assignPayConfigStorage(String appid, WxPayConfigStorage wxPayConfigStorage) {
             //          WxPayConfigStorage wxPayConfigStorage = new WxPayConfigStorage();
             wxPayConfigStorage.setAppid("公众账号ID");
             

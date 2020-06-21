@@ -263,7 +263,8 @@ public abstract class BasePayConfigStorage implements PayConfigStorage {
     
     @Override
     public PayConfigStorage setRequestTemplateConfigStorage(HttpConfigStorage httpConfigStorage) {
-        this.requestTemplate = new HttpRequestTemplate(httpConfigStorage);
+        this.requestTemplate = new HttpRequestTemplate();
+        this.requestTemplate.setHttpConfigStorage(httpConfigStorage);
         return this;
     }
 

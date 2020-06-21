@@ -1,9 +1,10 @@
 package com.egzosn.pay.common.http;
 
 
-import com.egzosn.pay.common.bean.CertStoreType;
+import java.io.IOException;
+import java.io.InputStream;
 
-import java.io.*;
+import com.egzosn.pay.common.bean.CertStoreType;
 
 /**
  * HTTP 配置
@@ -44,7 +45,7 @@ public class HttpConfigStorage {
      */
     private Object keystore;
     /**
-     * 证书对应的密码
+     * 证书对应的密码 ,微信中 指的是mch_id
      */
     private String storePassword;
     /**

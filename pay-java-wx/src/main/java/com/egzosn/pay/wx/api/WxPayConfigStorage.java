@@ -4,6 +4,7 @@ import static com.egzosn.pay.wx.api.WxConst.HMACSHA256;
 import static com.egzosn.pay.wx.api.WxConst.HMAC_SHA256;
 
 import com.egzosn.pay.common.api.BasePayConfigStorage;
+import com.egzosn.pay.common.util.str.StringUtils;
 
 /**
  * 微信配置存储
@@ -48,7 +49,7 @@ public class WxPayConfigStorage extends BasePayConfigStorage implements IWxPayCo
     }
 
 
-    /***应该在设置时判断，不能在 WxService::setPayConfigStorage中判断?? --by niaoge*/
+    /***应该在设置时判断，不能在 {@link WxService::setPayConfigStorage()}中判断?? --by niaoge*/
     @Override
     public void setSignType(String signType) {
         if (HMAC_SHA256.equals(signType)) {
@@ -56,7 +57,27 @@ public class WxPayConfigStorage extends BasePayConfigStorage implements IWxPayCo
         }
         super.setSignType(signType);
     }
-
+    
+    @Override
+    public String getSignType() {
+        String result= super.getSignType();
+        if (!StringUtils.isBlank(result)) {
+            return result;
+        }
+        if (isTest()) {
+            return "MD5";
+        }
+        return HMACSHA256;
+    }
+    
+    @Override
+    public String getInputCharset() {
+        String result= super.getInputCharset();
+        if (!StringUtils.isBlank(result)) {
+            return result;
+        }
+        return "utf-8";
+    }
 
     /**
      * 合作商唯一标识
