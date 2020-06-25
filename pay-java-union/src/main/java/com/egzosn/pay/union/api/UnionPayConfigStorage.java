@@ -15,7 +15,7 @@ import com.egzosn.pay.common.bean.CertStoreType;
  *           create 2017 2017/11/4 0004
  *         </pre>
  */
-public class UnionPayConfigStorage extends BasePayConfigStorage implements IUnionPayConfigStorage {
+public class UnionPayConfigStorage extends BasePayConfigStorage {
 
 
     /**
@@ -75,7 +75,6 @@ public class UnionPayConfigStorage extends BasePayConfigStorage implements IUnio
         this.keyPrivateCert = keyPrivateCert;
     }
 
-    @Override
     public InputStream getKeyPrivateCertInputStream() throws IOException {
         return certStoreType.getInputStream(keyPrivateCert);
     }
@@ -122,18 +121,13 @@ public class UnionPayConfigStorage extends BasePayConfigStorage implements IUnio
         return (String) acpRootCert;
     }
     
-    @Override
     public InputStream getAcpMiddleCertInputStream() throws IOException {
         return certStoreType.getInputStream(acpMiddleCert);
     }
 
-    @Override
     public InputStream getAcpRootCertInputStream() throws IOException {
         return certStoreType.getInputStream(acpRootCert);
     }
-
-
-
 
     @Override
     public String getAppid() {

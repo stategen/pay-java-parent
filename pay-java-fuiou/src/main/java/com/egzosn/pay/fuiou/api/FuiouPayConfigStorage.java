@@ -8,7 +8,7 @@ import com.egzosn.pay.common.api.BasePayConfigStorage;
  * create 2017 2017/1/16 0016
  * </pre>
  */
-public class FuiouPayConfigStorage extends BasePayConfigStorage implements IFuiouPayConfigStorage {
+public class FuiouPayConfigStorage extends BasePayConfigStorage {
     /**
      * 商户代码
      */

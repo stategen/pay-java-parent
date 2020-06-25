@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.Date;
 import java.util.Map;
 
+import com.alibaba.fastjson.JSON;
 import com.egzosn.pay.common.bean.MethodType;
 import com.egzosn.pay.common.bean.PayMessage;
 import com.egzosn.pay.common.bean.PayOrder;
@@ -112,6 +113,10 @@ public interface PayService<PC extends PayConfigStorage> {
      * @return 对应app所需参数信息
      */
     <O extends PayOrder>Map<String, Object> app(O order);
+    
+    /***把  map转换为对象,通过 {@link JSON} */
+    <T> T convertOrder(Map<String, Object> orderInfo, Class<T> orderClass);
+    
 
     /**
      * 创建签名
@@ -429,5 +434,6 @@ public interface PayService<PC extends PayConfigStorage> {
      * @return 处理后订单信息
      */
     <O extends PayOrder>Map<String, Object> preOrderHandler(Map<String, Object> orderInfo, O payOrder);
+
 
 }

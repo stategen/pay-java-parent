@@ -44,7 +44,7 @@ import com.egzosn.pay.payoneer.bean.PayoneerTransactionType;
  *         create 2018-01-19
  *                 </pre>
  */
-public class PayoneerPayService extends BasePayService<IPayoneerConfigStorage> implements AdvancedPayService {
+public class PayoneerPayService extends BasePayService<PayoneerConfigStorage> implements AdvancedPayService {
     /**
      * 测试地址
      */

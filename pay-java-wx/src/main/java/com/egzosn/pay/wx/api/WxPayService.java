@@ -63,7 +63,7 @@ import com.egzosn.pay.wx.bean.WxTransferType;
  * date 2016-5-18 14:09:01
  * </pre>
  */
-public class WxPayService extends BasePayService<IWxPayConfigStorage> implements WxRedPackService {
+public class WxPayService extends BasePayService<WxPayConfigStorage> implements WxRedPackService {
 
 
     /**
@@ -154,7 +154,7 @@ public class WxPayService extends BasePayService<IWxPayConfigStorage> implements
     private Map<String, Object> getPublicParameters() {
 
         Map<String, Object> parameters = new TreeMap<String, Object>();
-        IWxPayConfigStorage payConfigStorage =getPayConfigStorage();
+        WxPayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put(APPID, payConfigStorage.getAppid());
         parameters.put(MCH_ID, payConfigStorage.getMchId());
         //判断如果是服务商模式信息则加入
@@ -267,6 +267,7 @@ public class WxPayService extends BasePayService<IWxPayConfigStorage> implements
         throw new PayErrorException(new WxPayError(result.getString(RETURN_CODE), result.getString(RETURN_MSG_CODE), "Invalid sign value"));
 
     }
+    
 
     /**
      * 生成并设置签名
@@ -292,7 +293,7 @@ public class WxPayService extends BasePayService<IWxPayConfigStorage> implements
      * @return 验签秘钥
      */
     protected String getKeyPrivate() {
-        IWxPayConfigStorage payConfigStorage =getPayConfigStorage();
+        WxPayConfigStorage payConfigStorage =getPayConfigStorage();
         if (!payConfigStorage.isTest()) {
             return payConfigStorage.getKeyPrivate();
         }

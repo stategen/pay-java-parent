@@ -1,11 +1,11 @@
 package com.egzosn.pay.wx.bean;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import com.alibaba.fastjson.JSONObject;
 import com.egzosn.pay.common.bean.PayOrder;
 import com.egzosn.pay.common.bean.TransactionType;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * 微信交易类型
@@ -64,7 +64,7 @@ public enum  WxTransactionType implements TransactionType {
         @Override
         public void setAttribute(Map<String, Object> parameters, PayOrder order) {
             //H5支付专用
-            LinkedHashMap value = new LinkedHashMap();
+            LinkedHashMap<String,Object> value = new LinkedHashMap<>();
             value.put("type", "Wap");
             //WAP网站URL地址
             value.put("wap_url", order.getWapUrl());

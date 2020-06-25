@@ -25,7 +25,7 @@ import com.egzosn.pay.common.util.sign.SignUtils;
 import com.egzosn.pay.common.util.str.StringUtils;
 
 
-public class BaiduPayService extends BasePayService<IBaiduPayConfigStorage> {
+public class BaiduPayService extends BasePayService<BaiduPayConfigStorage> {
     public static final String APP_KEY = "appKey";
     public static final String APP_ID = "appId";
     public static final String DEAL_ID = "dealId";
@@ -100,7 +100,7 @@ public class BaiduPayService extends BasePayService<IBaiduPayConfigStorage> {
      * @return 结果
      */
     public Map<String, Object> getUseQueryPay() {
-        IBaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
+        BaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
         String appKey = payConfigStorage.getAppKey();
         Map<String, Object> result = new HashMap<>();
         result.put(APP_KEY, appKey);
@@ -117,7 +117,7 @@ public class BaiduPayService extends BasePayService<IBaiduPayConfigStorage> {
     private Map<String, Object> getUseOrderInfoParams(PayOrder order) {
         BaiduPayOrder payOrder = (BaiduPayOrder) order;
         Map<String, Object> result = new HashMap<>();
-        IBaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
+        BaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
         String appKey = payConfigStorage.getAppKey();
         String dealId = payConfigStorage.getDealId();
         result.put(APP_KEY, appKey);
@@ -323,7 +323,7 @@ public class BaiduPayService extends BasePayService<IBaiduPayConfigStorage> {
         parameters.put(TP_ORDER_ID, refundOrder.getTradeNo());
         parameters.put("applyRefundMoney", refundOrder.getRefundAmount());
         parameters.put("bizRefundBatchId", refundOrder.getRefundNo());
-        IBaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
+        BaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put(APP_KEY, payConfigStorage.getAppKey());
         parameters.put(RSA_SIGN, getRsaSign(parameters, RSA_SIGN));
         return getRequestTemplate().getForObject(String.format("%s?%s", getReqUrl(transactionType), UriVariables.getMapToParameters(parameters)), JSONObject.class);
@@ -346,7 +346,7 @@ public class BaiduPayService extends BasePayService<IBaiduPayConfigStorage> {
         parameters.put(TYPE, 3);
         parameters.put(ORDER_ID, refundOrder.getTradeNo());
         parameters.put(USER_ID, refundOrder.getUserId());
-        IBaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
+        BaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
         parameters.put(APP_KEY, payConfigStorage.getAppKey());
         parameters.put(RSA_SIGN, getRsaSign(parameters, RSA_SIGN));
         return getRequestTemplate().getForObject(String.format("%s?%s", getReqUrl(transactionType), UriVariables.getMapToParameters(parameters)), JSONObject.class);
@@ -426,7 +426,7 @@ public class BaiduPayService extends BasePayService<IBaiduPayConfigStorage> {
      */
     private String getRsaSign(Map<String, Object> params, String... ignoreKeys) {
         String waitSignVal = SignUtils.parameterText(params, "&", false, ignoreKeys);
-        IBaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
+        BaiduPayConfigStorage payConfigStorage =getPayConfigStorage();
         return SignUtils.valueOf(payConfigStorage.getSignType()).createSign(waitSignVal, payConfigStorage.getKeyPrivate(), payConfigStorage.getInputCharset());
     }
 

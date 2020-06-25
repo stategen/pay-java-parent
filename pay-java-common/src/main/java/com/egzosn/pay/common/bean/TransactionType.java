@@ -20,5 +20,7 @@ public interface TransactionType {
      * @return 接口
      */
      String getMethod();
+     
+//    PayProvider getPayProvider();
 }
 

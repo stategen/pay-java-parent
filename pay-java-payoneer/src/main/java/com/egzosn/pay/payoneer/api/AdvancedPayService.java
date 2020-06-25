@@ -15,7 +15,7 @@ import com.egzosn.pay.common.api.PayService;
  * 
  */
 
-public interface AdvancedPayService extends PayService<IPayoneerConfigStorage> {
+public interface AdvancedPayService extends PayService<PayoneerConfigStorage> {
     /**
      * 获取授权页面
      * @param payeeId 用户id

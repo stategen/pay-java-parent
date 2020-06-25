@@ -1,9 +1,9 @@
 package com.egzosn.pay.ali.bean;
 
+import java.util.Map;
+
 import com.egzosn.pay.common.bean.TransferOrder;
 import com.egzosn.pay.common.bean.TransferType;
-
-import java.util.Map;
 
 /**
  * 收款方账户类型
@@ -99,4 +99,5 @@ public enum AliTransferType implements TransferType {
         attr.put("biz_scene", getBizScene());
         return attr;
     }
+    
 }

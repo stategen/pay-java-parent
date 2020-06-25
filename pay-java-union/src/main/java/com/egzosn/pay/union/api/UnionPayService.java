@@ -56,7 +56,7 @@ import com.egzosn.pay.union.bean.UnionTransactionType;
  *         create 2017 2017/11/5
  *         </pre>
  */
-public class UnionPayService extends BasePayService<IUnionPayConfigStorage> {
+public class UnionPayService extends BasePayService<UnionPayConfigStorage> {
     
     /**
      * 测试域名
@@ -97,7 +97,7 @@ public class UnionPayService extends BasePayService<IUnionPayConfigStorage> {
      *            支付配置
      */
     @Override
-    public UnionPayService setPayConfigStorage(IUnionPayConfigStorage payConfigStorage) {
+    public UnionPayService setPayConfigStorage(UnionPayConfigStorage payConfigStorage) {
         super.setPayConfigStorage(payConfigStorage);
         if (!payConfigStorage.isCertSign() || null != certDescriptor) {
             return this;
@@ -161,7 +161,7 @@ public class UnionPayService extends BasePayService<IUnionPayConfigStorage> {
      */
     private Map<String, Object> getCommonParam() {
         Map<String, Object>    params           = new TreeMap<>();
-        IUnionPayConfigStorage payConfigStorage = getPayConfigStorage();
+        UnionPayConfigStorage payConfigStorage = getPayConfigStorage();
         //银联接口版本
         params.put(SDKConstants.param_version, payConfigStorage.getVersion());
         //编码方式

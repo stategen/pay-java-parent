@@ -38,7 +38,7 @@ import com.egzosn.pay.common.util.str.StringUtils;
  *         email egzosn@gmail.com
  *         date 2017-2-22 20:09
  */
-public class AliPayService extends BasePayService<IAliPayConfigStorage> {
+public class AliPayService extends BasePayService<AliPayConfigStorage> {
     
     /**
      * 正式测试环境

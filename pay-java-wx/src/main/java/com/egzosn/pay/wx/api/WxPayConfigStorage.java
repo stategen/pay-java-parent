@@ -15,7 +15,7 @@ import com.egzosn.pay.common.util.str.StringUtils;
  * date 2016-5-18 14:09:01
  * </pre>
  */
-public class WxPayConfigStorage extends BasePayConfigStorage implements IWxPayConfigStorage {
+public class WxPayConfigStorage extends BasePayConfigStorage {
 
 
     /**

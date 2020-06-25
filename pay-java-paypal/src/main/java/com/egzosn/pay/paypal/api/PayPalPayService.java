@@ -48,7 +48,7 @@ import com.egzosn.pay.paypal.bean.order.Transaction;
  * email egzosn@gmail.com
  * date 2018-4-8 ‏‎22:15:09
  */
-public class PayPalPayService extends BasePayService<IPayPalConfigStorage>{
+public class PayPalPayService extends BasePayService<PayPalConfigStorage>{
 
     /**
      * 沙箱环境

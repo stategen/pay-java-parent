@@ -10,7 +10,7 @@ import com.egzosn.pay.common.api.BasePayConfigStorage;
  * date 2018-01-19
  * </pre>
  */
-public class PayoneerConfigStorage extends BasePayConfigStorage implements IPayoneerConfigStorage {
+public class PayoneerConfigStorage extends BasePayConfigStorage {
     /**
      * 商户Id
      */

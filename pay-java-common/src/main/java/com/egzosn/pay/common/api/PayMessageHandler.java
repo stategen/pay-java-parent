@@ -1,10 +1,10 @@
 package com.egzosn.pay.common.api;
 
+import java.util.Map;
+
 import com.egzosn.pay.common.bean.PayMessage;
 import com.egzosn.pay.common.bean.PayOutMessage;
 import com.egzosn.pay.common.exception.PayErrorException;
-
-import java.util.Map;
 
 
 /**
@@ -33,5 +33,14 @@ public interface PayMessageHandler<M extends PayMessage, S extends PayService> {
                                 Map<String, Object> context,
                          S payService
     ) throws PayErrorException;
-
+    
+    /***
+     * 多appid,在验瓬之前，需要通过appid获取payConfigStorage
+     * 
+     * @param payMessage
+     * @param payService
+     */
+    default void preSignVerify(M payMessage, S payService) {
+        
+    }
 }

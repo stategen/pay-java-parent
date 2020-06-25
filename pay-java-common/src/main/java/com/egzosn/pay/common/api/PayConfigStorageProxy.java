@@ -1,10 +1,15 @@
 package com.egzosn.pay.common.api;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import net.sf.cglib.proxy.Enhancer;
+import net.sf.cglib.proxy.MethodInterceptor;
+import net.sf.cglib.proxy.MethodProxy;
 
 /***
  * PayConfigStorage的动态代理，支持多appid，请求中的request或head 或cookie中应该包含appid
@@ -12,7 +17,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author niaoge
  * @version $Id: PayConfigStorageProxy.java, v 0.1 2020年6月18日 下午5:52:21 XiaZhengsheng Exp $
  */
-public abstract class PayConfigStorageProxy<PC extends PayConfigStorage> implements InvocationHandler {
+public abstract class PayConfigStorageProxy<PC extends PayConfigStorage> implements MethodInterceptor {
+    
+    final static Log logger = LogFactory.getLog(PayConfigStorageProxy.class);
     
     /*** 公平锁,应该保证只有一个线程创建PayConfigStorage成功，其它线程都从缓存中获得 */
     private static ReentrantLock LOCK = new ReentrantLock(true);
@@ -40,7 +47,7 @@ public abstract class PayConfigStorageProxy<PC extends PayConfigStorage> impleme
     /*** 填充PayConfigStorage的各种属性,可以从数据库或者properties中拿到，包装 httpConfigStorage */
     public abstract void assignPayConfigStorage(String appid, PC payConfigStorage);
     
-    /***获取当前 PayConfigStorage的类型,Class*/
+    /*** 获取当前 PayConfigStorage的类型,Class */
     public abstract Class<? extends PC> getPayConfigStorageClz();
     
     /**
@@ -49,20 +56,33 @@ public abstract class PayConfigStorageProxy<PC extends PayConfigStorage> impleme
     @SuppressWarnings("unchecked")
     public PC createProxy() {
         Class<? extends PC> payConfigStorageClz = getPayConfigStorageClz();
-        return (PC) Proxy.newProxyInstance(payConfigStorageClz.getClassLoader(), payConfigStorageClz.getInterfaces(),
-                this);
+        Enhancer            enhancer            = new Enhancer();
+        //把父类设置为谁？
+        //这一步就是告诉cglib，生成的子类需要继承哪个类
+        enhancer.setSuperclass(payConfigStorageClz);
+        //设置回调
+        enhancer.setCallback(this);
+        
+        //第一步、生成源代码
+        //第二步、编译成class文件
+        //第三步、加载到JVM中，并返回被代理对象
+        return (PC) enhancer.create();
     }
     
+    /**
+     * sub：cglib生成的代理对象 method：被代理对象方法 objects：方法入参 methodProxy: 代理方法
+     */
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
         PayConfigStorage payConfigStorage = getPayConfigStorage(true);
-        return method.invoke(payConfigStorage,args);
+        Object           result           = method.invoke(payConfigStorage, args);
+        return result;
     }
     
     @SuppressWarnings("unchecked")
     protected PC getPayConfigStorage(boolean createIfNull) throws InstantiationException, IllegalAccessException {
         //第1次都到缓存里拿
-        //先从ThreadLocal中拿，因为，如果是测式环境，还有会有设置，所以暂时是放到 weChatPayConfigCaches中
+        //先从ThreadLocal中拿，因为，如果是测试环境，还有会有额外设置（获取沙箱签名），是个半成品，所以暂时不能放到放到 weChatPayConfigCaches中
         PC payConfigStorage = getStorageFormThreadLocal();
         if (payConfigStorage != null) {
             return payConfigStorage;

@@ -54,10 +54,12 @@ public abstract class BasePayService<PC extends PayConfigStorage> implements Pay
     /***
      * 支付消息处理器
      */
+    @SuppressWarnings("rawtypes")
     private PayMessageHandler handler;
     /**
      * 支付消息拦截器
      */
+    @SuppressWarnings("rawtypes")
     private List<PayMessageInterceptor> interceptors = new ArrayList<PayMessageInterceptor>();
    
     
@@ -177,6 +179,12 @@ public abstract class BasePayService<PC extends PayConfigStorage> implements Pay
     @Override
     public <O extends PayOrder> Map<String, Object> app(O order) {
         return orderInfo(order);
+    }
+    
+    @Override
+    public <T> T convertOrder(Map<String, Object> orderInfo, Class<T> orderClass) {
+        String jsonString = JSON.toJSONString(orderInfo);
+        return JSON.parseObject(jsonString, orderClass);
     }
 
     /**
@@ -395,6 +403,7 @@ public abstract class BasePayService<PC extends PayConfigStorage> implements Pay
      *                <p>
      *                默认使用{@link  DefaultPayMessageHandler }进行实现
      */
+    @SuppressWarnings("rawtypes")
     @Override
     public void setPayMessageHandler(PayMessageHandler handler) {
         this.handler = handler;
@@ -407,6 +416,7 @@ public abstract class BasePayService<PC extends PayConfigStorage> implements Pay
      *
      * @return 默认使用{@link  DefaultPayMessageHandler }进行实现
      */
+    @SuppressWarnings("rawtypes")
     public PayMessageHandler getPayMessageHandler() {
         if (null == handler) {
             setPayMessageHandler(new DefaultPayMessageHandler());
@@ -432,16 +442,22 @@ public abstract class BasePayService<PC extends PayConfigStorage> implements Pay
      * @param is           请求流
      * @return 获得回调响应信息
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public PayOutMessage payBack(Map<String, String[]> parameterMap, InputStream is) {
         Map<String, Object> data = getParameter2Map(parameterMap, is);
         if (LOG.isDebugEnabled()) {
             LOG.debug("回调响应:" + JSON.toJSONString(data));
         }
+        
+        PayMessageHandler payMessageHandler = getPayMessageHandler();
+        //多appid，先创建 payMessage，以便获取appid;
+        PayMessage payMessage = this.createMessage(data);
+        payMessageHandler.preSignVerify(payMessage, this);
         if (!verify(data)) {
             return getPayOutMessage("fail", "失败");
         }
-        PayMessage payMessage = this.createMessage(data);
+        
         Map<String, Object> context = new HashMap<String, Object>();
         for (PayMessageInterceptor interceptor : interceptors) {
             if (!interceptor.intercept(payMessage, context, this)) {

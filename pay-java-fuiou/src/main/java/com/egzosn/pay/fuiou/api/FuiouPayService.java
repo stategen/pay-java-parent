@@ -30,7 +30,7 @@ import com.egzosn.pay.fuiou.bean.FuiouTransactionType;
  * create 2017 2017/1/16 0016
  * </pre>
  */
-public class FuiouPayService extends BasePayService<IFuiouPayConfigStorage> {
+public class FuiouPayService extends BasePayService<FuiouPayConfigStorage> {
 
     /**
      * 正式域名

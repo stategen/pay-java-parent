@@ -10,7 +10,7 @@ import com.egzosn.pay.common.api.BasePayConfigStorage;
  *         email egzosn@gmail.com
  *         date 2016-5-18 14:09:01
  */
-public class AliPayConfigStorage extends BasePayConfigStorage implements IAliPayConfigStorage {
+public class AliPayConfigStorage extends BasePayConfigStorage {
 
     /**
      * 商户应用id
