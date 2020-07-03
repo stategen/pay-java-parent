@@ -20,15 +20,6 @@
         </dependency>
         <!-- /pay-java  -->
 
-        <dependency>
-            <!-- 由于该类没有实体，引用 以下jar中的bean.request和bean.result -->
-            <groupId>com.github.binarywang</groupId>
-            <version>3.8.0</version>
-            <artifactId>weixin-java-pay</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-
     </dependencies>
 
 

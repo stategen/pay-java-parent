@@ -38,10 +38,10 @@ public abstract class PayConfigStorageProxy<PC extends PayConfigStorage> impleme
      */
     public abstract void setStorageToThreadLocal(PC payConfigStorage);
     
-    /*** 获取放置appid的ThreadLocal,为了防止内存泄露，需要用户代码实现，线程休眠时自己释放，或者用netty的FastThreadLocal */
+    /*** 获取放置appid的ThreadLocal,为了防止内存泄露，需要用户代码实现，线程休眠时自己释放，或者用netty的FastThreadLocal ,appid在每个应用，不同提供商下都不是相同的，放在线程里不冲突 */
     public abstract String getAppidFromThreadLocal();
     
-    /*** 把appid放置到ThreadLocal中,为了防止内存泄露，需要用户代码实现，线程休眠时自己释放，或者用netty的FastThreadLocal */
+    /*** 把appid放置到ThreadLocal中,为了防止内存泄露，需要用户代码实现，线程休眠时自己释放，或者用netty的FastThreadLocal,appid在每个应用，不同提供商下都不是相同的，放在线程里不冲突 */
     public abstract void setAppidToThreadLocal(String appid);
     
     /*** 填充PayConfigStorage的各种属性,可以从数据库或者properties中拿到，包装 httpConfigStorage */

@@ -2,10 +2,11 @@ package com.egzosn.pay.common.bean;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Map;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 /**
  * 支付回调消息
@@ -16,6 +17,9 @@ import java.util.Map;
  *     date 2017/3/7 16:37
  *  </pre>
  */
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class PayMessage implements Serializable {
     private Map<String, Object> payMessage = null;
     private String msgType;
@@ -25,25 +29,8 @@ public class PayMessage implements Serializable {
     private String describe;
 
 
-    public PayMessage() {
-    }
-
     public PayMessage(Map<String, Object> payMessage) {
         this.payMessage = payMessage;
-    }
-
-    public PayMessage(Map<String, Object> payMessage, String payType, String msgType) {
-        this.payMessage = payMessage;
-        this.payType = payType;
-        this.msgType = msgType;
-    }
-
-
-    public PayMessage(Map<String, Object> payMessage, String msgType, String payType, String transactionType) {
-        this.payMessage = payMessage;
-        this.msgType = msgType;
-        this.payType = payType;
-        this.transactionType = transactionType;
     }
 
     protected void setPayMessage(Map<String, Object> payMessage) {
@@ -97,11 +84,13 @@ public class PayMessage implements Serializable {
         return (String) payMessage.get("subject");
     }
 
-
-
     /////////微信与支付宝共用
     public String getOutTradeNo(){
         return (String) payMessage.get("out_trade_no");
+    }
+    
+    public String getAppid() {
+        return (String) payMessage.get("appid");
     }
 
     public String getSign(){
@@ -135,7 +124,5 @@ public class PayMessage implements Serializable {
     public Map<String, Object> getPayMessage() {
         return payMessage;
     }
-
-
 
 }
