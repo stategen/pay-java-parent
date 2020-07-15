@@ -50,6 +50,8 @@ public abstract class PayConfigStorageProxy<PC extends PayConfigStorage> impleme
     /*** 获取当前 PayConfigStorage的类型,Class */
     public abstract Class<? extends PC> getPayConfigStorageClz();
     
+    public abstract String getDefaultAppid();
+    
     /**
      * 获取被代理接口实例对象
      */
